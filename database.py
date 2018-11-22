@@ -1,4 +1,5 @@
 import sqlite3
+import crypto
 
 DATABASE = "merg.db"
 
@@ -41,7 +42,10 @@ def push_events(events):
 		scout_name = event["scout_name"]
 		scout_team = event["scout_team"]
 		signature = event["signature"]
-		# TODO: Verify signature
+		del event["signature"]
+		# TODO: Get public key for scout/team
+		if not crypto.verify_row(event, public, signature):
+			return 2
 		stuff = (ev_type, team, match, start, end, success, scout_name, scout_team, signature)
 		db.execute("INSERT INTO events (type, team_number, match_number, start_time, end_time, success, extra, scout_name, scout_team, signature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", stuff)
 	return 0
