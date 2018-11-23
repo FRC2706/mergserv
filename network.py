@@ -3,8 +3,8 @@ import _thread as thread
 import json
 import database
 
-NET_PROTOCOL_VERSION_MAJOR = 0
-NET_PROTOCOL_VERSION_MINOR = 0
+API_VERSION_MAJOR = 0
+API_VERSION_MINOR = 0
 
 REQUEST_PUSH = "push"
 REQEUST_PULL = "pull"
@@ -14,10 +14,10 @@ REQUEST_DUMP_MATCHES = "dump_matches"
 REQUEST_LIST_COMPETITIONS = "list_comps"
 
 RESPONSE_OK = "ok"
-RESPONSE_VERSION_MISMATCH = "error_version_mismatch"
-RESPONSE_UNKNOWN = "error_unknown"
-RESPONSE_INVALID_REQUEST = "error_invalid"
-RESPONSE_SIGNATURE_REJECTED = "error_unauthorized"
+RESPONSE_VERSION_MISMATCH = "version_mismatch"
+RESPONSE_UNKNOWN = "unknown"
+RESPONSE_INVALID_REQUEST = "invalid"
+RESPONSE_SIGNATURE_REJECTED = "unauthorized"
 
 PORT = 9999
 
@@ -35,8 +35,8 @@ def read_string(sock):
 
 def write_msg(sock, request_type, extra):
 	data = extra.copy()
-	data["version_major"] = NET_PROTOCOL_VERSION_MAJOR
-	data["version_minor"] = NET_PROTOCOL_VERSION_MINOR
+	data["version_major"] = API_VERSION_MAJOR
+	data["version_minor"] = API_VERSION_MINOR
 	data["type"] = request_type
 	jstr = json.dumps(data)
 	sock.write(jstr)
@@ -66,7 +66,7 @@ def handle_request(sock):
 	# Check client version
 	major_version = jstr["version_major"]
 	minor_version = jstr["version_minor"]
-	if major_version != NET_PROTOCOL_VERSION_MAJOR:
+	if major_version != API_VERSION_MAJOR:
 		
 		# Throw version mismatch error
 		write_msg(sock, RESPONSE_VERSION_MISMATCH, {})
