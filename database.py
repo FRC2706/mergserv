@@ -10,11 +10,11 @@ def init_database():
 	db.execute("CREATE TABLE scouts (scout_name VARCHAR(16) PRIMARY KEY NOT NULL, team SMALLINT UNSIGNED NOT NULL, time_registered DATETIME NOT NULL, signature TEXT NOT NULL)")
 	db.execute("CREATE TABLE teams (team_number TINYINT UNSIGNED PRIMARY KEY NOT NULL, public_key TEXT NOT NULL, signature TEXT NOT NULL)")
 
-def get_events(last_update_time):
-	db.execute("SELECT * FROM events WHERE sync_time > from_unixtime(?)", (last_update_time,))
+def get_events(competition_name, last_update_time):
+	db.execute("SELECT * FROM events WHERE sync_time > from_unixtime(?)", (last_update_time,))	# TODO: Only from competition
 
-def get_scores(competition_name, match_num):
-	db.execute("SELECT * FROM matches WHERE competition_name=? AND match_number=?", (competition_name, match_num))
+def get_scores(competition_name, last_match_num):
+	db.execute("SELECT * FROM matches WHERE competition_name=? AND match_number>?", (competition_name, last_match_num))
 
 def dump_matches(competition_name):
 	db.execute("SELECT * FROM matches WHERE competition=?", (competition,))
@@ -44,6 +44,7 @@ def push_events(events):
 		signature = event["signature"]
 		del event["signature"]
 		# TODO: Get public key for scout/team
+		# TODO: Ensure scout is authorized to push
 		if not crypto.verify_row(event, public, signature):
 			return 2
 		stuff = (ev_type, team, match, start, end, success, scout_name, scout_team, signature)
@@ -51,6 +52,7 @@ def push_events(events):
 	return 0
 
 def push_scores(scores):
+	# TODO: Verify match scores
 	for mscore in scores:
 		stuff = (mscore["match_number"], mscore["blue_score"], mscore["red_score"])
 		db.execute("UPDATE matches WHERE match_number=? AND blue_score IS NULL AND red_score IS NULL SET blue_score=? AND red_score=?", stuff)
