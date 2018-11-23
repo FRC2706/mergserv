@@ -10,7 +10,7 @@ OK/Success: `"ok"`
 
 API version mismatch: `"version_mismatch"`
 
-Invalid requset type: `"invalid"`
+Invalid request type: `"invalid"`
 
 Unauthorized (usually due to broken crypto): `"unauthorized"`
 
