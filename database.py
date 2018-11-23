@@ -11,10 +11,10 @@ def init_database():
 	db.execute("CREATE TABLE teams (team_number TINYINT UNSIGNED PRIMARY KEY NOT NULL, public_key TEXT NOT NULL, signature TEXT NOT NULL)")
 
 def get_events(competition_name, last_update_time):
-	db.execute("SELECT * FROM events WHERE sync_time > from_unixtime(?)", (last_update_time,))	# TODO: Only from competition
+	db.execute("SELECT * FROM events WHERE sync_time > from_unixtime(?)", (last_update_time,))	# TODO: Only from specified competition
 
 def get_scores(competition_name, last_match_num):
-	db.execute("SELECT * FROM matches WHERE competition_name=? AND match_number>?", (competition_name, last_match_num))
+	db.execute("SELECT * FROM matches WHERE competition_name=? AND match_number > ?", (competition_name, last_match_num))
 
 def dump_matches(competition_name):
 	db.execute("SELECT * FROM matches WHERE competition=?", (competition,))
