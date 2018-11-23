@@ -44,7 +44,7 @@ def write_msg(sock, request_type, extra):
 def server():
 	ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-	ss.bind(("*", PORT))
+	ss.bind(("0.0.0.0", PORT))
 	ss.listen()
 	while True:
 		sock, addr = ss.accept()
