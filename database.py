@@ -17,16 +17,22 @@ def init_database():
 			print(e)
 
 def get_events(competition_name, last_update_time):
-	db.execute("SELECT * FROM events WHERE sync_time > from_unixtime(?)", (last_update_time,))	# TODO: Only from specified competition
+	db = get_db()
+	db.execute("SELECT * FROM events WHERE sync_time > datetime(?, 'unixepoch')", (last_update_time,))	# TODO: Only from specified competition
+	return db.fetchall()
 
 def get_scores(competition_name, last_match_num):
+	db = get_db()
 	db.execute("SELECT * FROM matches WHERE competition_name=? AND match_number > ?", (competition_name, last_match_num))
+	return db.fetchall()
 
 def dump_matches(competition_name):
+	db = get_db()
 	db.execute("SELECT * FROM matches WHERE competition=?", (competition,))
 	return db.fetchall()
 
 def list_competitions(year):
+	db = get_db()
 	db.execute("SELECT * FROM competitions WHERE year=?", (year,))
 	return db.fetchall()
 
@@ -37,6 +43,7 @@ Return codes:
 2: Invalid signature
 '''
 def push_events(events):
+	db = get_db()
 	for event in events:
 		ev_type = event["type"]
 		team = event["team_number"]
@@ -58,6 +65,7 @@ def push_events(events):
 	return 0
 
 def push_scores(scores):
+	db = get_db()
 	# TODO: Verify match scores
 	for mscore in scores:
 		stuff = (mscore["match_number"], mscore["blue_score"], mscore["red_score"])

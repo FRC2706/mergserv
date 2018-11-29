@@ -7,7 +7,7 @@ API_VERSION_MAJOR = 0
 API_VERSION_MINOR = 0
 
 REQUEST_PUSH = "push"
-REQEUST_PULL = "pull"
+REQUEST_PULL = "pull"
 REQUEST_PUSH_SCORES = "push_scores"
 REQUEST_PULL_SCORES = "pull_scores"
 REQUEST_DUMP_MATCHES = "dump_matches"
@@ -29,7 +29,7 @@ def read_string(sock):
 			sock.close()
 			return None
 		char = dat.decode('utf-8')
-		if char == '\x00':
+		if char == '\x00' or char == '\n':
 			return val
 		val+= char
 
@@ -39,7 +39,7 @@ def write_msg(sock, request_type, extra):
 	data["version_minor"] = API_VERSION_MINOR
 	data["type"] = request_type
 	jstr = json.dumps(data)
-	sock.write(jstr)
+	sock.sendall(jstr.encode('utf-8'))
 
 def server():
 	ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -48,7 +48,7 @@ def server():
 	ss.listen()
 	while True:
 		sock, addr = ss.accept()
-		THREAD.start_new_thread(handle_request, (sock,))
+		thread.start_new_thread(handle_request, (sock,))
 
 def handle_request(sock):
 	
@@ -64,8 +64,8 @@ def handle_request(sock):
 		return
 	
 	# Check client version
-	major_version = jstr["version_major"]
-	minor_version = jstr["version_minor"]
+	major_version = data["version_major"]
+	minor_version = data["version_minor"]
 	if major_version != API_VERSION_MAJOR:
 		
 		# Throw version mismatch error
