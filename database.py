@@ -71,6 +71,8 @@ def push_scores(scores):
 		stuff = (mscore["match_number"], mscore["blue_score"], mscore["red_score"])
 		db.execute("UPDATE matches WHERE match_number=? AND blue_score IS NULL AND red_score IS NULL SET blue_score=? AND red_score=?", stuff)
 
-conn = sqlite3.connect(DATABASE)
-db = conn.cursor()
+def get_db()
+	conn = sqlite3.connect(DATABASE)
+	return conn.cursor()
+
 init_database()
