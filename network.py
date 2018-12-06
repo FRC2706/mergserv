@@ -75,11 +75,11 @@ def handle_request(sock):
 	if data["type"] == REQUEST_PUSH:
 		
 		# Perform push
-		if not "events" in data:
+		if not "events" in data or not "competition" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
 			sock.close()
 			return
-		ret = database.push_events(data["events"])
+		ret = database.push_events(data["competition"], data["events"])
 		
 		# Return push status
 		response = RESPONSE_OK

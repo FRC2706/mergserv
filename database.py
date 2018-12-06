@@ -6,7 +6,7 @@ DATABASE = "merg.db"
 def init_database():
 	db = get_db()
 	tables = [
-		"CREATE TABLE events (sync_time DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL, type VARCHAR(5) NOT NULL, team_number SMALLINT UNSIGNED NOT NULL, match_number TINYINT UNSIGNED NOT NULL, start_time TINYINT UNSIGNED NOT NULL, end_time TINYINT UNSIGNED NOT NULL, extra VARCHAR(64) NOT NULL, scout_name VARCHAR(16) NOT NULL, scout_team SMALLINT UNSIGNED NOT NULL, signature TEXT NOT NULL)",
+		"CREATE TABLE events (sync_time DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL, type VARCHAR(5) NOT NULL, team_number SMALLINT UNSIGNED NOT NULL, match_number TINYINT UNSIGNED NOT NULL, competition VARCHAR(16) NOT NULL, start_time TINYINT UNSIGNED NOT NULL, end_time TINYINT UNSIGNED NOT NULL, extra VARCHAR(64) NOT NULL, scout_name VARCHAR(16) NOT NULL, scout_team SMALLINT UNSIGNED NOT NULL, signature TEXT NOT NULL)",
 		"CREATE TABLE matches (match_number TINYINT UNSIGNED PRIMARY KEY NOT NULL, competition VARCHAR(16) NOT NULL, blue1 TINYINT UNSIGNED NOT NULL, blue2 TINYINT UNSIGNED NOT NULL, blue3 TINYINT UNSIGNED NOT NULL, red1 TINYINT UNSIGNED NOT NULL, red2 TINYINT UNSIGNED NOT NULL, red3 TINYINT UNSIGNED NOT NULL)",
 		"CREATE TABLE competitions (competition VARCHAR(16) PRIMARY KEY NOT NULL, year SMALLINT UNSIGNED NOT NULL)",
 		"CREATE TABLE scouts (scout_name VARCHAR(16) PRIMARY KEY NOT NULL, team SMALLINT UNSIGNED NOT NULL, time_registered DATETIME NOT NULL, signature TEXT NOT NULL)",
@@ -45,7 +45,7 @@ Return codes:
 1: Unknown error
 2: Invalid signature
 '''
-def push_events(events):
+def push_events(competition, events):
 	db = get_db()
 	for event in events:
 		ev_type = event["type"]
@@ -63,8 +63,8 @@ def push_events(events):
 		public = db.fetch()['public_key']
 		if public == None or not crypto.verify_row(event, public, signature):
 			return 2
-		stuff = (ev_type, team, match, start, end, success, scout_name, scout_team, signature)
-		db.execute("INSERT INTO events (type, team_number, match_number, start_time, end_time, success, extra, scout_name, scout_team, signature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", stuff)
+		stuff = (ev_type, team, match, competition, start, end, success, scout_name, scout_team, signature)
+		db.execute("INSERT INTO events (type, team_number, match_number, competition, start_time, end_time, success, extra, scout_name, scout_team, signature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", stuff)
 	return 0
 
 def get_db():
