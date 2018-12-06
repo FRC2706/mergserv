@@ -3,6 +3,8 @@ import _thread as thread
 import json
 import database
 import cjdns
+from cjdns import key_utils
+import ipaddress
 
 API_VERSION_MAJOR = 0
 API_VERSION_MINOR = 0
@@ -134,8 +136,8 @@ def peerscan():
 	global peers
 	
 	# Connect to daemon & get own address
-	cjdns = cjdns.connectWithAdminInfo()
-	keySplit = cjdns.Core_nodeInfo()['myAddr'].split('.')
+	cjd = cjdns.connectWithAdminInfo()
+	keySplit = cjd.Core_nodeInfo()['myAddr'].split('.')
 	own_address = key_utils.to_ipv6(keySplit[len(keySplit) - 2] + '.k')
 	own_address = ipaddress.IPv6Address(own_address).compressed
 	
@@ -143,7 +145,7 @@ def peerscan():
 	peers = []
 	page = 0
 	while True:
-		nodetable = cjdns.NodeStore_dumpTable(page)
+		nodetable = cjd.NodeStore_dumpTable(page)
 		page+= 1
 		if not 'more' in nodetable:
 			break
@@ -153,12 +155,12 @@ def peerscan():
 			peers.append(item['ip'])
 	
 	# Connect to discovered nodes
-	for i in range(len(peers)):	# TODO: Multiple scan threads
+	for peer in peers:	# TODO: Multiple scan threads
 		try:
 			# Connect to peer
 			sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 			sock.settimeout(PEER_CONNECT_TIMEOUT)
-			sock.connect((address, PORT))
+			sock.connect((peer, PORT))
 			sock.close()
 		except:
-			del peers[i]
+			peers.remove(peer)
