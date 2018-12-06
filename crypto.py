@@ -21,4 +21,3 @@ def verify_row(row, public, signature):
 		return True
 	except:
 		return False
-

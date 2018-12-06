@@ -2,14 +2,15 @@ import socket as socket
 import _thread as thread
 import json
 import database
+import cjdns
+from cjdns import key_utils
+import ipaddress
 
 API_VERSION_MAJOR = 0
 API_VERSION_MINOR = 0
 
 REQUEST_PUSH = "push"
 REQUEST_PULL = "pull"
-REQUEST_PUSH_SCORES = "push_scores"
-REQUEST_PULL_SCORES = "pull_scores"
 REQUEST_DUMP_MATCHES = "dump_matches"
 REQUEST_LIST_COMPETITIONS = "list_comps"
 
@@ -19,7 +20,10 @@ RESPONSE_UNKNOWN = "unknown"
 RESPONSE_INVALID_REQUEST = "invalid"
 RESPONSE_SIGNATURE_REJECTED = "unauthorized"
 
+PEER_CONNECT_TIMEOUT = 1
 PORT = 9999
+
+peers = []
 
 def read_string(sock):
 	val = ""
@@ -46,12 +50,18 @@ def server():
 	ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	ss.bind(("0.0.0.0", PORT))
 	ss.listen()
+	thread.start_new_thread(peerscan, ())
 	while True:
 		sock, addr = ss.accept()
 		thread.start_new_thread(handle_request, (sock,))
 
 def handle_request(sock):
-
+	
+	# Add to our peers list if they aren't in it already
+	ip = sock.getpeername()[0]
+	if not ip in peers:
+		peers.append(ip)
+	
 	# Read JSON request
 	jstr = read_string(sock)
 	if jstr is None:
@@ -82,12 +92,12 @@ def handle_request(sock):
 	if data["type"] == REQUEST_PUSH:
 
 		# Perform push
-		if not "events" in data:
+		if not "events" in data or not "competition" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
 			sock.close()
 			return
-		ret = database.push_events(data["events"])
-
+		ret = database.push_events(data["competition"], data["events"])
+		
 		# Return push status
 		response = RESPONSE_OK
 		if ret == 1:
@@ -105,21 +115,6 @@ def handle_request(sock):
 			return
 		events = database.get_events(data["competition"], data["last_sync"])
 		write_msg(sock, RESPONSE_OK, {"events": events})
-
-	elif data["type"] == REQUEST_PUSH_SCORES:
-		# TODO: Push match scores
-		pass
-
-	elif data["type"] == REQUEST_PULL_SCORES:
-
-		# Fetch scores from database
-		if not "last_match" in data or not "competition" in data:
-			write_msg(sock, RESPONSE_UNKNOWN, {})
-			sock.close()
-			return
-		matches = database.get_scores(data["competition"], data["last_match"])
-		write_msg(sock, RESPONSE_OK, {"matches": matches})
-
 	elif data["type"] == REQUEST_DUMP_MATCHES:
 		if not "competition" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
@@ -139,3 +134,37 @@ def handle_request(sock):
 	else:
 		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
 	sock.close()
+
+# Find peers on CJDNS and connect to them
+def peerscan():
+	global peers
+	
+	# Connect to daemon & get own address
+	cjd = cjdns.connectWithAdminInfo()
+	keySplit = cjd.Core_nodeInfo()['myAddr'].split('.')
+	own_address = key_utils.to_ipv6(keySplit[len(keySplit) - 2] + '.k')
+	own_address = ipaddress.IPv6Address(own_address).compressed
+	
+	# Discover nodes
+	peers = []
+	page = 0
+	while True:
+		nodetable = cjd.NodeStore_dumpTable(page)
+		page+= 1
+		if not 'more' in nodetable:
+			break
+		for item in nodetable['routingTable']:
+			if item['ip'] == own_address:
+				continue
+			peers.append(item['ip'])
+	
+	# Connect to discovered nodes
+	for peer in peers:	# TODO: Multiple scan threads
+		try:
+			# Connect to peer
+			sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+			sock.settimeout(PEER_CONNECT_TIMEOUT)
+			sock.connect((peer, PORT))
+			sock.close()
+		except:
+			peers.remove(peer)
