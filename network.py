@@ -66,26 +66,31 @@ def handle_request(sock):
 	jstr = read_string(sock)
 	if jstr is None:
 		return
-	data = json.loads(jstr)
-	
+	try:
+		data = json.loads(jstr)
+	except:
+		# Client send invalid json
+		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
+		return
+
 	# Check that request is formatted correctly
 	if not "version_major" in data or not "version_minor" in data or not "type" in data:
 		sock.close()
 		return
-	
+
 	# Check client version
 	major_version = data["version_major"]
 	minor_version = data["version_minor"]
 	if major_version != API_VERSION_MAJOR:
-		
+
 		# Throw version mismatch error
 		write_msg(sock, RESPONSE_VERSION_MISMATCH, {})
 		sock.close()
 		return
-	
+
 	# Switch by request type
 	if data["type"] == REQUEST_PUSH:
-		
+
 		# Perform push
 		if not "events" in data or not "competition" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
@@ -100,9 +105,9 @@ def handle_request(sock):
 		elif ret == 2:
 			response = RESPONSE_SIGNATURE_REJECTED
 		write_msg(sock, response, {})
-		
+
 	elif data["type"] == REQUEST_PULL:
-		
+
 		# Fetch events from database
 		if not "last_sync" in data or not "competition" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
@@ -110,7 +115,6 @@ def handle_request(sock):
 			return
 		events = database.get_events(data["competition"], data["last_sync"])
 		write_msg(sock, RESPONSE_OK, {"events": events})
-		
 	elif data["type"] == REQUEST_DUMP_MATCHES:
 		if not "competition" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
@@ -118,7 +122,7 @@ def handle_request(sock):
 			return
 		matches = database.dump_matches(data["competition"])
 		write_msg(sock, RESPONSE_OK, {"matches": matches})
-		
+
 	elif data["type"] == REQUEST_LIST_COMPETITIONS:
 		if not "year" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
@@ -126,7 +130,7 @@ def handle_request(sock):
 			return
 		comps = database.list_competitions(data["year"])
 		write_msg(sock, RESPONSE_OK, {"competitions": comps})
-		
+
 	else:
 		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
 	sock.close()

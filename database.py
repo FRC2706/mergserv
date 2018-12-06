@@ -20,22 +20,22 @@ def init_database():
 			print(e)
 
 def get_events(competition_name, last_update_time):
-	db = get_db()
-	db.execute("SELECT * FROM events WHERE competition=? AND sync_time > datetime(?, 'unixepoch')", (competition_name, last_update_time))
+	conn, db = get_db()
+	db.execute("SELECT * FROM events WHERE sync_time > datetime(?, 'unixepoch')", (last_update_time,))	# TODO: Only from specified competition
 	return db.fetchall()
 
 def get_scores(competition_name, last_match_num):
-	db = get_db()
+	conn, db = get_db()
 	db.execute("SELECT * FROM matches WHERE competition_name=? AND match_number > ?", (competition_name, last_match_num))
 	return db.fetchall()
 
 def dump_matches(competition_name):
-	db = get_db()
+	conn, db = get_db()
 	db.execute("SELECT * FROM matches WHERE competition=?", (competition,))
 	return db.fetchall()
 
 def list_competitions(year):
-	db = get_db()
+	conn, db = get_db()
 	db.execute("SELECT * FROM competitions WHERE year=?", (year,))
 	return db.fetchall()
 
@@ -45,8 +45,9 @@ Return codes:
 1: Unknown error
 2: Invalid signature
 '''
+
 def push_events(competition, events):
-	db = get_db()
+	conn, db = get_db()
 	for event in events:
 		ev_type = event["type"]
 		team = event["team_number"]
@@ -67,8 +68,21 @@ def push_events(competition, events):
 		db.execute("INSERT INTO events (type, team_number, match_number, competition, start_time, end_time, success, extra, scout_name, scout_team, signature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", stuff)
 	return 0
 
+
+def push_scores(scores):
+	conn, db = get_db()
+	# TODO: Verify match scores
+	for mscore in scores:
+		stuff = (mscore["match_number"], mscore["blue_score"], mscore["red_score"])
+		db.execute("UPDATE matches WHERE match_number=? AND blue_score IS NULL AND red_score IS NULL SET blue_score=? AND red_score=?", stuff)
+
 def get_db():
 	conn = sqlite3.connect(DATABASE)
-	return conn.cursor()
+	return (conn, conn.cursor())
+
+def insert_competition(code, year):
+	conn, db = get_db()
+	db.execute("INSERT INTO competitions (year, competition) VALUES (?, ?)", (year, code))
+	conn.commit()
 
 init_database()
