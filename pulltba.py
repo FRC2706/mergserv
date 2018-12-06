@@ -61,5 +61,17 @@ print("Found %d events for the %s season" % (len(events), current_season))
 
 for event in events:
     # Write event to database
-    database.insert_competition(event['key'], current_season)
-    print("pushed event %s" % event['key'])
+    try:
+        database.insert_competition(event['key'], current_season)
+    except Exception as e:
+        # Competition was probably already in the table
+        pass
+    else:
+        # Inform user if competition was added
+        print("pushed event %s" % event['key'])
+
+    # Mke request for matches
+    matches = get("event/%s/matches" % event['key'])
+    id = 1
+    for match in matches:
+        pass
