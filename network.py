@@ -8,8 +8,6 @@ API_VERSION_MINOR = 0
 
 REQUEST_PUSH = "push"
 REQUEST_PULL = "pull"
-REQUEST_PUSH_SCORES = "push_scores"
-REQUEST_PULL_SCORES = "pull_scores"
 REQUEST_DUMP_MATCHES = "dump_matches"
 REQUEST_LIST_COMPETITIONS = "list_comps"
 
@@ -100,20 +98,6 @@ def handle_request(sock):
 			return
 		events = database.get_events(data["competition"], data["last_sync"])
 		write_msg(sock, RESPONSE_OK, {"events": events})
-		
-	elif data["type"] == REQUEST_PUSH_SCORES:
-		# TODO: Push match scores
-		pass
-		
-	elif data["type"] == REQUEST_PULL_SCORES:
-		
-		# Fetch scores from database
-		if not "last_match" in data or not "competition" in data:
-			write_msg(sock, RESPONSE_UNKNOWN, {})
-			sock.close()
-			return
-		matches = database.get_scores(data["competition"], data["last_match"])
-		write_msg(sock, RESPONSE_OK, {"matches": matches})
 		
 	elif data["type"] == REQUEST_DUMP_MATCHES:
 		if not "competition" in data:

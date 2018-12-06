@@ -59,13 +59,6 @@ def push_events(events):
 		db.execute("INSERT INTO events (type, team_number, match_number, start_time, end_time, success, extra, scout_name, scout_team, signature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", stuff)
 	return 0
 
-def push_scores(scores):
-	db = get_db()
-	# TODO: Verify match scores
-	for mscore in scores:
-		stuff = (mscore["match_number"], mscore["blue_score"], mscore["red_score"])
-		db.execute("UPDATE matches WHERE match_number=? AND blue_score IS NULL AND red_score IS NULL SET blue_score=? AND red_score=?", stuff)
-
 def get_db():
 	conn = sqlite3.connect(DATABASE)
 	return conn.cursor()
