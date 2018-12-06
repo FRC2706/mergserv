@@ -2,3 +2,7 @@
 !.gitignore
 !*.py
 !*.md
+!mergserv
+!mkprivate
+!trustkey
+!untrestkey
