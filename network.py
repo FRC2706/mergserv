@@ -2,6 +2,7 @@ import socket as socket
 import _thread as thread
 import json
 import database
+import cjdns
 
 API_VERSION_MAJOR = 0
 API_VERSION_MINOR = 0
@@ -17,7 +18,10 @@ RESPONSE_UNKNOWN = "unknown"
 RESPONSE_INVALID_REQUEST = "invalid"
 RESPONSE_SIGNATURE_REJECTED = "unauthorized"
 
+PEER_CONNECT_TIMEOUT = 1
 PORT = 9999
+
+peers = []
 
 def read_string(sock):
 	val = ""
@@ -44,11 +48,17 @@ def server():
 	ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	ss.bind(("0.0.0.0", PORT))
 	ss.listen()
+	thread.start_new_thread(peerscan, ())
 	while True:
 		sock, addr = ss.accept()
 		thread.start_new_thread(handle_request, (sock,))
 
 def handle_request(sock):
+	
+	# Add to our peers list if they aren't in it already
+	ip = sock.getpeername()[0]
+	if not ip in peers:
+		peers.append(ip)
 	
 	# Read JSON request
 	jstr = read_string(sock)
@@ -119,3 +129,36 @@ def handle_request(sock):
 		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
 	sock.close()
 
+# Find peers on CJDNS and connect to them
+def peerscan():
+	global peers
+	
+	# Connect to daemon & get own address
+	cjdns = cjdns.connectWithAdminInfo()
+	keySplit = cjdns.Core_nodeInfo()['myAddr'].split('.')
+	own_address = key_utils.to_ipv6(keySplit[len(keySplit) - 2] + '.k')
+	own_address = ipaddress.IPv6Address(own_address).compressed
+	
+	# Discover nodes
+	peers = []
+	page = 0
+	while True:
+		nodetable = cjdns.NodeStore_dumpTable(page)
+		page+= 1
+		if not 'more' in nodetable:
+			break
+		for item in nodetable['routingTable']:
+			if item['ip'] == own_address:
+				continue
+			peers.append(item['ip'])
+	
+	# Connect to discovered nodes
+	for i in range(len(peers)):	# TODO: Multiple scan threads
+		try:
+			# Connect to peer
+			sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+			sock.settimeout(PEER_CONNECT_TIMEOUT)
+			sock.connect((address, PORT))
+			sock.close()
+		except:
+			del peers[i]
