@@ -21,7 +21,7 @@ def init_database():
 
 def get_events(competition_name, last_update_time):
 	db = get_db()
-	db.execute("SELECT * FROM events WHERE sync_time > datetime(?, 'unixepoch')", (last_update_time,))	# TODO: Only from specified competition
+	db.execute("SELECT * FROM events WHERE competition=? AND sync_time > datetime(?, 'unixepoch')", (competition_name, last_update_time))
 	return db.fetchall()
 
 def get_scores(competition_name, last_match_num):
