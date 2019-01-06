@@ -30,5 +30,19 @@ while True:
     elif command == "sync-all-peers":
         pass
 
+    elif command == "list-peers":
+        for peer in network.peers:
+            print(peer)
+
+    elif command.startswith("add-peer"):
+        peer = command.split(" ")[1]
+        if network.verifypeer(peer):
+            network.peers.append(peer)
+            print("Peer test successful, added to peerlist")
+        else:
+            print("Peer test failed.")
+
+    
+
     else:
         print("Unrecognized command.")

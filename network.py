@@ -146,6 +146,9 @@ def handle_request(sock):
 		comps = database.list_competitions(data["year"])
 		write_msg(sock, RESPONSE_OK, {"competitions": comps})
 
+	elif data["type"] == REQUEST_PEER_LIST:
+		writemsg(sock, RESPONSE_OK, peers)
+
 	else:
 		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
 	sock.close()
@@ -158,11 +161,17 @@ def peerscan():
 
 	# Connect to discovered nodes
 	for peer in peers:	# TODO: Multiple scan threads
-		try:
-			# Connect to peer
-			sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-			sock.settimeout(PEER_CONNECT_TIMEOUT)
-			sock.connect((peer, PORT))
-			sock.close()
-		except:
+		if not verifypeer(peer):
 			peers.remove(peer)
+
+def verifypeer(peer):
+	try:
+		# Connect to peer
+		sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+		sock.settimeout(PEER_CONNECT_TIMEOUT)
+		sock.connect((peer, PORT))
+		sock.close()
+		return True
+	except Exception as e:
+		print(e)
+		return False
