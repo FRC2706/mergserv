@@ -19,9 +19,12 @@ RESPONSE_INVALID_REQUEST = "invalid"
 RESPONSE_SIGNATURE_REJECTED = "unauthorized"
 
 PEER_CONNECT_TIMEOUT = 1
+SOCKET_TIMEOUT = 3
 PORT = 9999
 
 peers = []
+
+ENABLED = True
 
 def read_string(sock):
 	val = ""
@@ -48,14 +51,24 @@ def start_server():
 	threading.Thread(target=server, daemon=True).start()
 
 def server():
+	socket.setdefaulttimeout(SOCKET_TIMEOUT)
 	ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	ss.bind(("0.0.0.0", PORT))
 	ss.listen()
 	thread.start_new_thread(peerscan, ())
+	print("Network started!")
 	while True:
-		sock, addr = ss.accept()
-		thread.start_new_thread(handle_request, (sock,))
+		if ENABLED:
+			try:
+				sock, addr = ss.accept()
+				thread.start_new_thread(handle_request, (sock,))
+			except:
+				# socket timed out.
+				continue
+		else:
+			break
+	print("Network stopped!")
 
 def handle_request(sock):
 
