@@ -51,8 +51,8 @@ def start_server():
 	threading.Thread(target=server, daemon=True).start()
 
 def server():
-	socket.setdefaulttimeout(SOCKET_TIMEOUT)
 	ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	ss.settimeout(SOCKET_TIMEOUT)
 	ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	ss.bind(("0.0.0.0", PORT))
 	ss.listen()
