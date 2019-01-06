@@ -11,6 +11,7 @@ import sys
 import urllib.request
 import json
 import database
+import re
 
 # Constants
 baseurl = "https://www.thebluealliance.com/api/v3/"
@@ -48,6 +49,7 @@ if not status:
 
 # Inform the user
 current_season = status['current_season']
+current_season = "2018"
 print("Current season is %s" % current_season)
 
 # Make request
@@ -65,13 +67,27 @@ for event in events:
         database.insert_competition(event['key'], current_season)
     except Exception as e:
         # Competition was probably already in the table
-        pass
+        print(e)
     else:
         # Inform user if competition was added
         print("pushed event %s" % event['key'])
 
-    # Mke request for matches
-    matches = get("event/%s/matches" % event['key'])
+    # Make request for matches
+    matches = get("event/%s/matches" % event['key'], {})
+    if matches == False: continue
     id = 1
     for match in matches:
-        pass
+        try:
+            red = [int(re.sub('[^0-9]','', x)) for x in match['alliances']['red']['team_keys']]
+            blue = [int(re.sub('[^0-9]','', x)) for x in match['alliances']['blue']['team_keys']]
+            database.insert_match(match['match_number'], event['key'], red, blue)
+        except Exception as e:
+            print(e)
+            print(event['key'])
+            print(match['match_number'])
+            print(match['alliances']['red']['team_keys'])
+            print(match['alliances']['blue']['team_keys'])
+            sys.exit(1)
+        else:
+            #print("Added match %s for event %s" % (match['match_number'], event['key']))
+            pass

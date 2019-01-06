@@ -85,4 +85,9 @@ def insert_competition(code, year):
 	db.execute("INSERT INTO competitions (year, competition) VALUES (?, ?)", (year, code))
 	conn.commit()
 
+def insert_match(number, event, red, blue):
+	conn, db = get_db()
+	db.execute("INSERT INTO matches (match_number, competition, red1, red2, red3, blue1, blue2, blue3) VALUES (?,?,?,?,?,?,?,?)", (number, event, red[0], red[1], red[2], blue[0], blue[1], blue[2]))
+	conn.commit()
+
 init_database()
