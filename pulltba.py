@@ -26,6 +26,13 @@ except:
     print("The `TBA.key` file is missing, please create that file and put your TBA API key inside.")
     sys.exit(1)
 
+try:
+    with open("merg.db") as f:
+        pass
+except:
+    print("The database file is missing. please run MergServ at least once before using this tool.")
+    sys.exit(1)
+
 # Generic request function
 def get(url, headers):
     r = urllib.request.Request(baseurl+url)
@@ -49,7 +56,6 @@ if not status:
 
 # Inform the user
 current_season = status['current_season']
-current_season = "2018"
 print("Current season is %s" % current_season)
 
 # Make request
