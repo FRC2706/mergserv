@@ -4,7 +4,7 @@ import crypto
 DATABASE = "merg.db"
 
 def init_database():
-	db = get_db()
+	conn, db = get_db()
 	tables = [
 		"CREATE TABLE events (sync_time DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL, type VARCHAR(5) NOT NULL, team_number SMALLINT UNSIGNED NOT NULL, match_number TINYINT UNSIGNED NOT NULL, competition VARCHAR(16) NOT NULL, start_time TINYINT UNSIGNED NOT NULL, end_time TINYINT UNSIGNED NOT NULL, extra VARCHAR(64) NOT NULL, scout_name VARCHAR(16) NOT NULL, scout_team SMALLINT UNSIGNED NOT NULL, signature TEXT NOT NULL)",
 		"CREATE TABLE matches (match_number TINYINT UNSIGNED PRIMARY KEY NOT NULL, competition VARCHAR(16) NOT NULL, blue1 TINYINT UNSIGNED NOT NULL, blue2 TINYINT UNSIGNED NOT NULL, blue3 TINYINT UNSIGNED NOT NULL, red1 TINYINT UNSIGNED NOT NULL, red2 TINYINT UNSIGNED NOT NULL, red3 TINYINT UNSIGNED NOT NULL)",
@@ -12,7 +12,7 @@ def init_database():
 		"CREATE TABLE scouts (scout_name VARCHAR(16) PRIMARY KEY NOT NULL, team SMALLINT UNSIGNED NOT NULL, time_registered DATETIME NOT NULL, signature TEXT NOT NULL)",
 		"CREATE TABLE teams (team_number TINYINT UNSIGNED PRIMARY KEY NOT NULL, public_key TEXT NOT NULL, signature TEXT NOT NULL)"
 	]
-	
+
 	for table in tables:
 		try:
 			db.execute(table)

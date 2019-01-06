@@ -1,5 +1,6 @@
 import socket as socket
 import _thread as thread
+import threading
 import json
 import database
 
@@ -42,6 +43,10 @@ def write_msg(sock, request_type, extra):
 	jstr = json.dumps(data)
 	sock.sendall(jstr.encode('utf-8'))
 
+def start_server():
+	# Start the thread as a daemon, so it will stop when the main thread exits
+	threading.Thread(target=server, daemon=True).start()
+
 def server():
 	ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -53,12 +58,12 @@ def server():
 		thread.start_new_thread(handle_request, (sock,))
 
 def handle_request(sock):
-	
+
 	# Add to our peers list if they aren't in it already
 	ip = sock.getpeername()[0]
 	if not ip in peers:
 		peers.append(ip)
-	
+
 	# Read JSON request
 	jstr = read_string(sock)
 	if jstr is None:
@@ -94,7 +99,7 @@ def handle_request(sock):
 			sock.close()
 			return
 		ret = database.push_events(data["competition"], data["events"])
-		
+
 		# Return push status
 		response = RESPONSE_OK
 		if ret == 1:
@@ -135,9 +140,9 @@ def handle_request(sock):
 # Find peers and connect to them
 def peerscan():
 	global peers
-	
+
 	# TODO: Discover nodes
-	
+
 	# Connect to discovered nodes
 	for peer in peers:	# TODO: Multiple scan threads
 		try:
