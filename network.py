@@ -2,9 +2,6 @@ import socket as socket
 import _thread as thread
 import json
 import database
-import cjdns
-from cjdns import key_utils
-import ipaddress
 
 API_VERSION_MAJOR = 0
 API_VERSION_MINOR = 0
@@ -131,28 +128,11 @@ def handle_request(sock):
 		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
 	sock.close()
 
-# Find peers on CJDNS and connect to them
+# Find peers and connect to them
 def peerscan():
 	global peers
 	
-	# Connect to daemon & get own address
-	cjd = cjdns.connectWithAdminInfo()
-	keySplit = cjd.Core_nodeInfo()['myAddr'].split('.')
-	own_address = key_utils.to_ipv6(keySplit[len(keySplit) - 2] + '.k')
-	own_address = ipaddress.IPv6Address(own_address).compressed
-	
-	# Discover nodes
-	peers = []
-	page = 0
-	while True:
-		nodetable = cjd.NodeStore_dumpTable(page)
-		page+= 1
-		if not 'more' in nodetable:
-			break
-		for item in nodetable['routingTable']:
-			if item['ip'] == own_address:
-				continue
-			peers.append(item['ip'])
+	# TODO: Discover nodes
 	
 	# Connect to discovered nodes
 	for peer in peers:	# TODO: Multiple scan threads
