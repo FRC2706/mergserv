@@ -31,8 +31,9 @@ while True:
         pass
 
     elif command == "list-peers":
+        print(("Server has %d peer" % len(network.peers)) + ("s" if len(network.peers) != 1 else "") + (":" if len(network.peers) != 0 else ""))
         for peer in network.peers:
-            print(peer)
+            print("\t" + peer)
 
     elif command.startswith("add-peer"):
         peer = command.split(" ")[1]
@@ -42,7 +43,7 @@ while True:
         else:
             print("Peer test failed.")
 
-    
+
 
     else:
         print("Unrecognized command.")

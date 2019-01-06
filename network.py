@@ -173,5 +173,5 @@ def verifypeer(peer):
 		sock.close()
 		return True
 	except Exception as e:
-		print(e)
+		print("Error while attempting connection to %s: %s" % (peer, e))
 		return False
