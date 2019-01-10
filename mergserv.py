@@ -10,7 +10,7 @@ network.start_server()
 while True:
     command = input()
 
-    if command == "disable-networking":
+    if command == "net off":
         if not network.ENABLED:
             print("Networking is already disabled. enable it with 'enable-networking'")
         else:
@@ -18,7 +18,7 @@ while True:
             print("Disabling network...")
             network.ENABLED = False
 
-    elif command == "enable-networking":
+    elif command == "net on":
         if network.ENABLED:
             print("Networking is already enabled. Disable it with 'disable-networking'")
         else:
@@ -27,15 +27,15 @@ while True:
             network.ENABLED = True
             network.start_server()
 
-    elif command == "sync-all-peers":
+    elif command == "sync":
         pass
 
-    elif command == "list-peers":
+    elif command == "listpeers":
         print(("Server has %d peer" % len(network.peers)) + ("s" if len(network.peers) != 1 else "") + (":" if len(network.peers) != 0 else ""))
         for peer in network.peers:
             print("\t" + peer)
 
-    elif command.startswith("add-peer"):
+    elif command.startswith("addpeer"):
         peer = command.split(" ")[1]
         if network.verifypeer(peer):
             network.peers.append(peer)
@@ -45,5 +45,7 @@ while True:
 
 
 
+    elif command == "":
+        pass
     else:
         print("Unrecognized command.")
