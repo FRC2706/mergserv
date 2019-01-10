@@ -158,10 +158,10 @@ def handle_request(sock):
 # Find peers and connect to them
 def peerscan():
 	global peers
-	
+
 	# Discover possible peers
 	peers = expand_lan()
-	
+
 	# Connect to discovered nodes
 	for peer in peers:
 		try:
@@ -170,7 +170,7 @@ def peerscan():
 			sock.settimeout(PEER_CONNECT_TIMEOUT)
 			sock.connect((peer, PORT))
 			sock.settimeout(None)
-                        thread.start_new_thread(handle_request, (sock,))
+			thread.start_new_thread(handle_request, (sock,))
 		except:
 			peers.remove(peer)
 
@@ -178,6 +178,10 @@ def expand_lan():
 	addrs = []
 	for adapter in ifaddr.get_adapters():
 		for localhost in adapter.ips:
-			for ip in ipaddress.ip_network(localhost.ip + "/24").hosts():
+			if type(localhost.ip) != str:
+				continue
+			print("Scanning %s" % localhost.ip)
+			for ip in ipaddress.ip_network(localhost.ip + "/24", False).hosts():
 				addrs.append(ip)
+	print("Finished scanning, appended %d addresses" % len(addrs))
 	return addrs
