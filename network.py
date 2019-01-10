@@ -3,6 +3,8 @@ import _thread as thread
 import threading
 import json
 import database
+import ipaddress
+import ifaddr
 
 API_VERSION_MAJOR = 0
 API_VERSION_MINOR = 0
@@ -156,22 +158,26 @@ def handle_request(sock):
 # Find peers and connect to them
 def peerscan():
 	global peers
-
-	# TODO: Discover nodes
-
+	
+	# Discover possible peers
+	peers = expand_lan()
+	
 	# Connect to discovered nodes
-	for peer in peers:	# TODO: Multiple scan threads
-		if not verifypeer(peer):
+	for peer in peers:
+		try:
+			# Connect to peer
+			sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+			sock.settimeout(PEER_CONNECT_TIMEOUT)
+			sock.connect((peer, PORT))
+			sock.settimeout(None)
+                        thread.start_new_thread(handle_request, (sock,))
+		except:
 			peers.remove(peer)
 
-def verifypeer(peer):
-	try:
-		# Connect to peer
-		sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-		sock.settimeout(PEER_CONNECT_TIMEOUT)
-		sock.connect((peer, PORT))
-		sock.close()
-		return True
-	except Exception as e:
-		print("Error while attempting connection to %s: %s" % (peer, e))
-		return False
+def expand_lan():
+	addrs = []
+	for adapter in ifaddr.get_adapters():
+		for localhost in adapter.ips:
+			for ip in ipaddress.ip_network(localhost.ip + "/24").hosts():
+				addrs.append(ip)
+	return addrs
