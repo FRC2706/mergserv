@@ -2,6 +2,8 @@ import socket as socket
 import _thread as thread
 import json
 import database
+import ipaddress
+import ifaddr
 
 API_VERSION_MAJOR = 0
 API_VERSION_MINOR = 0
@@ -136,10 +138,11 @@ def handle_request(sock):
 def peerscan():
 	global peers
 	
-	# TODO: Discover nodes
+	# Discover possible peers
+	peers = expand_lan()
 	
 	# Connect to discovered nodes
-	for peer in peers:	# TODO: Multiple scan threads
+	for peer in peers:
 		try:
 			# Connect to peer
 			sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
@@ -148,3 +151,11 @@ def peerscan():
 			sock.close()
 		except:
 			peers.remove(peer)
+
+def expand_lan():
+	addrs = []
+	for adapter in ifaddr.get_adapters():
+		for localhost in adapter.ips:
+			for ip in ipaddress.ip_network(localhost.ip + "/24").hosts():
+				addrs.append(ip)
+	return addrs
