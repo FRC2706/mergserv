@@ -171,7 +171,6 @@ def peerscan():
 			sock.connect((peer, PORT))
 			sock.settimeout(None)
 			thread.start_new_thread(handle_request, (sock,))
-			print("Connected!")
 		except:
 			peers.remove(peer)
 
@@ -181,8 +180,7 @@ def expand_lan():
 		for localhost in adapter.ips:
 			if type(localhost.ip) != str:
 				continue
-			print("Expanding %s" % localhost.ip)
 			for ip in ipaddress.ip_network(localhost.ip + "/24", False).hosts():
 				addrs.append(ip)
-	print("Finished scanning, appended %d addresses" % len(addrs))
+	print("Finished scanning, discovered %d hosts" % len(addrs))
 	return addrs
