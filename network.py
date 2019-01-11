@@ -22,7 +22,7 @@ RESPONSE_SIGNATURE_REJECTED = "unauthorized"
 
 PEER_CONNECT_TIMEOUT = 1
 SOCKET_TIMEOUT = 3
-PORT = 9999
+PORT = 31465
 
 peers = []
 
@@ -171,6 +171,7 @@ def peerscan():
 			sock.connect((peer, PORT))
 			sock.settimeout(None)
 			thread.start_new_thread(handle_request, (sock,))
+			print("Connected!")
 		except:
 			peers.remove(peer)
 
@@ -180,7 +181,7 @@ def expand_lan():
 		for localhost in adapter.ips:
 			if type(localhost.ip) != str:
 				continue
-			print("Scanning %s" % localhost.ip)
+			print("Expanding %s" % localhost.ip)
 			for ip in ipaddress.ip_network(localhost.ip + "/24", False).hosts():
 				addrs.append(ip)
 	print("Finished scanning, appended %d addresses" % len(addrs))
