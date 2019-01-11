@@ -48,6 +48,22 @@ def write_msg(sock, request_type, extra):
 	jstr = json.dumps(data)
 	sock.sendall(jstr.encode('utf-8'))
 
+def push_all(sock, year):
+	for competition in database.list_competitions(year):
+		push(sock, competition["competition"])
+
+def push(sock, competition):
+	write_msg(sock, REQUEST_PUSH, {"events": database.get_events(competition)})
+
+def pull(sock, competition):
+	write_msg(sock, REQUEST_PULL, {"competition": competition})
+
+def request_matches(sock, competition):
+	write_msg(sock, REQUEST_DUMP_MATCHES, {"competition": competition})
+
+def request_comps(sock, year):
+	write_msg(sock, REQUEST_LIST_COMPETITIONS, {"year": year})
+
 def start_server():
 	# Start the thread as a daemon, so it will stop when the main thread exits
 	threading.Thread(target=server, daemon=True).start()
@@ -126,11 +142,11 @@ def handle_request(sock):
 	elif data["type"] == REQUEST_PULL:
 
 		# Fetch events from database
-		if not "last_sync" in data or not "competition" in data:
+		if not "competition" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
 			sock.close()
 			return
-		events = database.get_events(data["competition"], data["last_sync"])
+		events = database.get_events(data["competition"])
 		write_msg(sock, RESPONSE_OK, {"events": events})
 	elif data["type"] == REQUEST_DUMP_MATCHES:
 		if not "competition" in data:
