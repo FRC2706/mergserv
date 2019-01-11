@@ -22,7 +22,7 @@ RESPONSE_SIGNATURE_REJECTED = "unauthorized"
 
 PEER_CONNECT_TIMEOUT = 1
 SOCKET_TIMEOUT = 3
-PORT = 9999
+PORT = 31465
 
 peers = []
 
@@ -180,8 +180,7 @@ def expand_lan():
 		for localhost in adapter.ips:
 			if type(localhost.ip) != str:
 				continue
-			print("Scanning %s" % localhost.ip)
 			for ip in ipaddress.ip_network(localhost.ip + "/24", False).hosts():
 				addrs.append(ip)
-	print("Finished scanning, appended %d addresses" % len(addrs))
+	print("Finished scanning, discovered %d hosts" % len(addrs))
 	return addrs
