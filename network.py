@@ -51,15 +51,19 @@ def write_msg_new(addr, request_type, extra):
 			peers.remove(addr)
 			print("Removed peer '" + peer + "'")
 		return None
-	return write_msg(sock, request_type, extra)
+	return write_msg(sock, request_type, extra, True)
 
-def write_msg(sock, request_type, extra):
+def write_msg(sock, request_type, extra, wait_for_response):
 	data = extra.copy()
 	data["version_major"] = API_VERSION_MAJOR
 	data["version_minor"] = API_VERSION_MINOR
 	data["type"] = request_type
 	jstr = json.dumps(data) + "\00"
 	sock.sendall(jstr.encode('utf-8'))
+	
+	if not wait_for_response:
+		sock.close()
+		return None
 	
 	# Read response
 	jstr = read_string(sock)
@@ -94,7 +98,7 @@ def request_comps(addr, year):
 		pass	# TODO: Handle comps
 
 def handshake(sock):
-	resp = write_msg(sock, REQUEST_HANDSHAKE, {"peers": peers})
+	resp = write_msg(sock, REQUEST_HANDSHAKE, {"peers": peers}, True)
 	if resp["type"] != RESPONSE_OK or not "peers" in resp:
 		return
 	handle_handshake(resp)
@@ -145,8 +149,7 @@ def handle_request(sock):
 		data = json.loads(jstr)
 	except:
 		# Client send invalid json
-		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
-		sock.close()
+		write_msg(sock, RESPONSE_INVALID_REQUEST, {}, False)
 		return
 	
 	# Check that request is formatted correctly
@@ -160,8 +163,7 @@ def handle_request(sock):
 	if major_version != API_VERSION_MAJOR:
 		
 		# Throw version mismatch error
-		write_msg(sock, RESPONSE_VERSION_MISMATCH, {})
-		sock.close()
+		write_msg(sock, RESPONSE_VERSION_MISMATCH, {}, False)
 		return
 	
 	# Add to peers list
@@ -173,19 +175,17 @@ def handle_request(sock):
 	# Switch by request type
 	if data["type"] == REQUEST_HANDSHAKE:
 		if not "peers" in data:
-			write_msg(sock, RESPONSE_UNKNOWN, {})
-			sock.close()
+			write_msg(sock, RESPONSE_UNKNOWN, {}, False)
 			return
 		
 		handle_handshake(data)
-		write_msg(sock, RESPONSE_OK, {"peers": peers})
+		write_msg(sock, RESPONSE_OK, {"peers": peers}, False)
 		
 	if data["type"] == REQUEST_PUSH:
 		
 		# Perform push
 		if not "events" in data or not "competition" in data:
-			write_msg(sock, RESPONSE_UNKNOWN, {})
-			sock.close()
+			write_msg(sock, RESPONSE_UNKNOWN, {}, False)
 			return
 		ret = database.push_events(data["competition"], data["events"])
 		
@@ -195,35 +195,34 @@ def handle_request(sock):
 			response = RESPONSE_UNKNOWN
 		elif ret == 2:
 			response = RESPONSE_SIGNATURE_REJECTED
-		write_msg(sock, response, {})
+		write_msg(sock, response, {}, False)
 		
 	elif data["type"] == REQUEST_PULL:
 		
 		# Fetch events from database
 		if not "competition" in data:
-			write_msg(sock, RESPONSE_UNKNOWN, {})
+			write_msg(sock, RESPONSE_UNKNOWN, {}, False)
 			sock.close()
 			return
 		events = database.get_events(data["competition"])
-		write_msg(sock, RESPONSE_OK, {"events": events})
+		write_msg(sock, RESPONSE_OK, {"events": events}, False)
 	elif data["type"] == REQUEST_DUMP_MATCHES:
 		if not "competition" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
 			sock.close()
 			return
 		matches = database.dump_matches(data["competition"])
-		write_msg(sock, RESPONSE_OK, {"matches": matches})
+		write_msg(sock, RESPONSE_OK, {"matches": matches}, False)
 		
 	elif data["type"] == REQUEST_LIST_COMPETITIONS:
 		if not "year" in data:
-			write_msg(sock, RESPONSE_UNKNOWN, {})
-			sock.close()
+			write_msg(sock, RESPONSE_UNKNOWN, {}, False)
 			return
 		comps = database.list_competitions(data["year"])
-		write_msg(sock, RESPONSE_OK, {"competitions": comps})
+		write_msg(sock, RESPONSE_OK, {"competitions": comps}, False)
 		
 	else:
-		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
+		write_msg(sock, RESPONSE_INVALID_REQUEST, {}, False)
 	sock.close()
 
 # Find peers and connect to them
