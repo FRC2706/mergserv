@@ -231,7 +231,6 @@ def handle_request(sock):
 
 # Find peers and connect to them
 def peerscan():
-	print("Peerscan")
 	global peers
 	global fed_peers
 	global scan_timer
