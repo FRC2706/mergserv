@@ -40,7 +40,15 @@ def read_string(sock):
 			return val
 		val+= char
 
-def write_msg(sock, request_type, extra):
+def write_msg(addr, request_type, extra):
+	try:
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		sock.connect((peer, PORT))
+	except:
+		if addr in peers:
+			peers.remove(addr)
+			print("Removed peer '" + peer + "'")
+		return
 	data = extra.copy()
 	data["version_major"] = API_VERSION_MAJOR
 	data["version_minor"] = API_VERSION_MINOR
@@ -48,21 +56,21 @@ def write_msg(sock, request_type, extra):
 	jstr = json.dumps(data)
 	sock.sendall(jstr.encode('utf-8'))
 
-def push_all(sock, year):
+def push_all(addr, year):
 	for competition in database.list_competitions(year):
-		push(sock, competition["competition"])
+		push(addr, competition["competition"])
 
-def push(sock, competition):
-	write_msg(sock, REQUEST_PUSH, {"events": database.get_events(competition)})
+def push(addr, competition):
+	write_msg(addr, REQUEST_PUSH, {"events": database.get_events(competition)})
 
-def pull(sock, competition):
-	write_msg(sock, REQUEST_PULL, {"competition": competition})
+def pull(addr, competition):
+	write_msg(addr, REQUEST_PULL, {"competition": competition})
 
-def request_matches(sock, competition):
-	write_msg(sock, REQUEST_DUMP_MATCHES, {"competition": competition})
+def request_matches(addr, competition):
+	write_msg(addr, REQUEST_DUMP_MATCHES, {"competition": competition})
 
-def request_comps(sock, year):
-	write_msg(sock, REQUEST_LIST_COMPETITIONS, {"year": year})
+def request_comps(addr, year):
+	write_msg(addr, REQUEST_LIST_COMPETITIONS, {"year": year})
 
 def start_server():
 	# Start the thread as a daemon, so it will stop when the main thread exits
@@ -89,12 +97,12 @@ def server():
 	print("Network stopped!")
 
 def handle_request(sock):
-
+	
 	# Add to our peers list if they aren't in it already
 	ip = sock.getpeername()[0]
 	if not ip in peers:
 		peers.append(ip)
-
+	
 	# Read JSON request
 	jstr = read_string(sock)
 	if jstr is None:
@@ -105,32 +113,32 @@ def handle_request(sock):
 		# Client send invalid json
 		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
 		return
-
+	
 	# Check that request is formatted correctly
 	if not "version_major" in data or not "version_minor" in data or not "type" in data:
 		sock.close()
 		return
-
+	
 	# Check client version
 	major_version = data["version_major"]
 	minor_version = data["version_minor"]
 	if major_version != API_VERSION_MAJOR:
-
+		
 		# Throw version mismatch error
 		write_msg(sock, RESPONSE_VERSION_MISMATCH, {})
 		sock.close()
 		return
-
+	
 	# Switch by request type
 	if data["type"] == REQUEST_PUSH:
-
+		
 		# Perform push
 		if not "events" in data or not "competition" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
 			sock.close()
 			return
 		ret = database.push_events(data["competition"], data["events"])
-
+		
 		# Return push status
 		response = RESPONSE_OK
 		if ret == 1:
@@ -138,9 +146,9 @@ def handle_request(sock):
 		elif ret == 2:
 			response = RESPONSE_SIGNATURE_REJECTED
 		write_msg(sock, response, {})
-
+		
 	elif data["type"] == REQUEST_PULL:
-
+		
 		# Fetch events from database
 		if not "competition" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
@@ -155,7 +163,7 @@ def handle_request(sock):
 			return
 		matches = database.dump_matches(data["competition"])
 		write_msg(sock, RESPONSE_OK, {"matches": matches})
-
+		
 	elif data["type"] == REQUEST_LIST_COMPETITIONS:
 		if not "year" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
@@ -163,32 +171,41 @@ def handle_request(sock):
 			return
 		comps = database.list_competitions(data["year"])
 		write_msg(sock, RESPONSE_OK, {"competitions": comps})
-
+		
 	elif data["type"] == REQUEST_PEER_LIST:
 		writemsg(sock, RESPONSE_OK, peers)
-
+		
 	else:
 		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
+	peers.remove(peer)
 	sock.close()
 
 # Find peers and connect to them
 def peerscan():
 	global peers
-
-	# Discover possible peers
-	peers = expand_lan()
-
+	
+	# Discover peers
+	tmp_peers = expand_lan()
+	for peer in man_peers:
+		if not peer in peers:
+			tmp_peers.append(peer)
+	
 	# Connect to discovered nodes
-	for peer in peers:
+	for peer in tmp_peers:
 		try:
 			# Connect to peer
-			sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			sock.settimeout(PEER_CONNECT_TIMEOUT)
 			sock.connect((peer, PORT))
 			sock.settimeout(None)
-			thread.start_new_thread(handle_request, (sock,))
+			peers.append(peer)
+			print("Added peer '" + peer + "'")
+			sock.close()
 		except:
-			peers.remove(peer)
+			if peer in peers:
+				print("Removed peer '" + peer + "'")
+				peers.remove(peer)
+	write_peers()
 
 def expand_lan():
 	addrs = []
@@ -198,5 +215,36 @@ def expand_lan():
 				continue
 			for ip in ipaddress.ip_network(localhost.ip + "/24", False).hosts():
 				addrs.append(ip)
-	print("Finished scanning, discovered %d hosts" % len(addrs))
 	return addrs
+
+def write_peers():
+	f = open("disc_peers", "w+")
+	for peer in peers:
+		f.write(peer + "\n")
+	f.close()
+
+# Load man_peers
+man_peers = []
+try:
+	f = open("man_peers", "r")
+	for line in f:
+		line = line.strip()
+		if not line == "" and not line.startswith("#"):
+			man_peers.append(line)
+	f.close()
+except:
+	f = open("man_peers", "w+")
+	f.write("167.99.176.67")	# openfortress.xyz server
+	f.close()
+
+# Load discovered peers
+peers = []
+try:
+	f = open("disc_peers", "r")
+	for line in f:
+		line = line.strip()
+		if not line == "" and not line.startswith("#"):
+			peers.append(line)
+	f.close()
+except:
+	pass
