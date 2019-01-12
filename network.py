@@ -151,7 +151,6 @@ def server():
 def handle_request(sock):
 	global peers
 	global fed_peers
-	
 	# Read JSON request
 	jstr = read_string(sock)
 	if jstr is None:

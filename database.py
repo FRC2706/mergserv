@@ -76,21 +76,17 @@ def push_events(competition, events):
 		scout_team = event["scout_team"]
 		signature = event["signature"]
 		del event["signature"]
-		db.execute("SELECT * FROM teams WHERE team_number=?", (team,))
-		public = db.fetch()['public_key']
+		db.execute("SELECT * FROM teams WHERE team=?", (team,))
+		ht = db.fetchall()
+		if len(ht) < 1:
+			return 2
+		public = ht[0][1]
 		if public == None or not crypto.verify_row(event, public, signature):
 			return 2
 		stuff = (ev_type, team, match, competition, start, end, success, scout_name, scout_team, signature)
 		db.execute("INSERT INTO events (type, team_number, match_number, competition, start_time, end_time, success, extra, scout_name, scout_team, signature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", stuff)
+	conn.commit()
 	return 0
-
-
-def push_scores(scores):
-	conn, db = get_db()
-	# TODO: Verify match scores
-	for mscore in scores:
-		stuff = (mscore["match_number"], mscore["blue_score"], mscore["red_score"])
-		db.execute("UPDATE matches WHERE match_number=? AND blue_score IS NULL AND red_score IS NULL SET blue_score=? AND red_score=?", stuff)
 
 def get_db():
 	conn = sqlite3.connect(DATABASE)
