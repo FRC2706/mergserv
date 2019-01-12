@@ -26,7 +26,8 @@ SOCKET_TIMEOUT = 3
 PORT = 31465
 
 peers = []
-
+scan_timer = None
+SCAN_INTERVAL = 300 # seconds
 ENABLED = True
 
 def add_peer(peer):
@@ -144,6 +145,7 @@ def server():
 				continue
 		else:
 			break
+	scan_timer.cancel()
 	print("Network stopped!")
 
 def handle_request(sock):
@@ -236,6 +238,7 @@ def handle_request(sock):
 def peerscan():
 	global peers
 	global fed_peers
+	global scan_timer
 	
 	# Discover peers
 	tmp_peers = fed_peers
@@ -260,6 +263,8 @@ def peerscan():
 		except:
 			remove_peer(peer)
 	write_peers()
+	scan_timer = threading.Timer(SCAN_INTERVAL, peerscan)
+	scan_timer.start()
 
 def expand_lan():
 	addrs = []
