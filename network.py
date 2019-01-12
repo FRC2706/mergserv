@@ -94,18 +94,22 @@ def push(addr, competition):
 
 def pull(addr, competition):
 	resp = write_msg_new(addr, REQUEST_PULL, {"competition": competition})
-	if resp != None:
-		pass	# TODO: Handle pull
+	if resp != None and resp["type"] == RESPONSE_OK and "events" in resp:
+		database.push_events(competition, resp["events"])
 
 def request_matches(addr, competition):
 	resp = write_msg_new(addr, REQUEST_DUMP_MATCHES, {"competition": competition})
-	if resp != None:
-		pass	# TODO: Handle matches
+	if resp != None and resp["type"] == RESPONSE_OK and "matches" in resp:
+		for match in resp["matches"]:
+				red = [match["red1"], match["red2"], match["red3"]]
+				blue = [match["blue1"], match["blue2"], match["blue3"]]
+				database.insert_match(match["match_number"], competition, red, blue)
 
 def request_comps(addr, year):
 	resp = write_msg_new(addr, REQUEST_LIST_COMPETITIONS, {"year": year})
-	if resp != None:
-		pass	# TODO: Handle comps
+	if resp != None and resp["type"] == RESPONSE_OK and "competitions" in resp:
+		for competition in resp["competitions"]:
+				database.insert_competition(competition["competition"], year)
 
 def handshake(sock):
 	resp = write_msg(sock, REQUEST_HANDSHAKE, {"peers": peers}, True)
@@ -209,6 +213,7 @@ def handle_request(sock):
 			return
 		events = database.get_events(data["competition"])
 		write_msg(sock, RESPONSE_OK, {"events": events}, False)
+
 	elif data["type"] == REQUEST_DUMP_MATCHES:
 		if not "competition" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
