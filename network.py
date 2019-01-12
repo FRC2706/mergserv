@@ -21,13 +21,25 @@ RESPONSE_UNKNOWN = "unknown"
 RESPONSE_INVALID_REQUEST = "invalid"
 RESPONSE_SIGNATURE_REJECTED = "unauthorized"
 
-PEER_CONNECT_TIMEOUT = 4
+PEER_CONNECT_TIMEOUT = 1
 SOCKET_TIMEOUT = 3
 PORT = 31465
 
 peers = []
 
 ENABLED = True
+
+def add_peer(peer):
+	global peers
+	if not peer in peers:
+		peers.append(peer)
+		print("Added peer '" + peer + "'")
+
+def remove_peer(peer):
+	global peers
+	if peer in peers:
+		peers.remove(peer)
+		print("Removed peer '" + peer + "'")
 
 def read_string(sock):
 	val = ""
@@ -47,9 +59,7 @@ def write_msg_new(addr, request_type, extra):
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sock.connect((peer, PORT))
 	except:
-		if addr in peers:
-			peers.remove(addr)
-			print("Removed peer '" + peer + "'")
+		remove_peer(peer)
 		return None
 	return write_msg(sock, request_type, extra, True)
 
@@ -136,11 +146,6 @@ def handle_request(sock):
 	global peers
 	global fed_peers
 	
-	# Add to our peers list if they aren't in it already
-	ip = sock.getpeername()[0]
-	if not ip in peers:
-		peers.append(ip)
-	
 	# Read JSON request
 	jstr = read_string(sock)
 	if jstr is None:
@@ -166,11 +171,9 @@ def handle_request(sock):
 		write_msg(sock, RESPONSE_VERSION_MISMATCH, {}, False)
 		return
 	
-	# Add to peers list
-	if not ip in peers:
-		peers.append(ip)
-		print("Added peer '" + ip + "'")
-		write_peers()
+	# Add to our peers list if they aren't in it already
+	ip = sock.getpeername()[0]
+	add_peer(ip)
 	
 	# Switch by request type
 	if data["type"] == REQUEST_HANDSHAKE:
@@ -246,14 +249,11 @@ def peerscan():
 			sock.settimeout(PEER_CONNECT_TIMEOUT)
 			sock.connect((peer, PORT))
 			sock.settimeout(None)
-			if not peer in peers:
-				peers.append(peer)
+			add_peer(peer)
 			print("Added peer '" + peer + "'")
 			handshake(sock)
 		except:
-			if peer in peers:
-				print("Removed peer '" + peer + "'")
-				peers.remove(peer)
+			remove_peer(peer)
 	write_peers()
 
 def expand_lan():
