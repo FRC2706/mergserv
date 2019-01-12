@@ -21,7 +21,7 @@ RESPONSE_UNKNOWN = "unknown"
 RESPONSE_INVALID_REQUEST = "invalid"
 RESPONSE_SIGNATURE_REJECTED = "unauthorized"
 
-PEER_CONNECT_TIMEOUT = 1
+PEER_CONNECT_TIMEOUT = 4
 SOCKET_TIMEOUT = 3
 PORT = 31465
 
@@ -181,7 +181,7 @@ def handle_request(sock):
 		handle_handshake(data)
 		write_msg(sock, RESPONSE_OK, {"peers": peers}, False)
 		
-	if data["type"] == REQUEST_PUSH:
+	elif data["type"] == REQUEST_PUSH:
 		
 		# Perform push
 		if not "events" in data or not "competition" in data:
@@ -223,7 +223,6 @@ def handle_request(sock):
 		
 	else:
 		write_msg(sock, RESPONSE_INVALID_REQUEST, {}, False)
-	sock.close()
 
 # Find peers and connect to them
 def peerscan():
@@ -233,7 +232,7 @@ def peerscan():
 	# Discover peers
 	tmp_peers = fed_peers
 	tmp_peers = tmp_peers + peers
-	tmp_peers = tmp_peers + expand_lan()
+	#tmp_peers = tmp_peers + expand_lan()
 	for peer in man_peers:
 		if not peer in peers:
 			tmp_peers.append(peer)
