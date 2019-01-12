@@ -50,8 +50,8 @@ def write_msg_new(addr, request_type, extra):
 		if addr in peers:
 			peers.remove(addr)
 			print("Removed peer '" + peer + "'")
-		return
-	write_msg(sock, request_type, extra)
+		return None
+	return write_msg(sock, request_type, extra)
 
 def write_msg(sock, request_type, extra):
 	data = extra.copy()
@@ -60,6 +60,16 @@ def write_msg(sock, request_type, extra):
 	data["type"] = request_type
 	jstr = json.dumps(data) + "\00"
 	sock.sendall(jstr.encode('utf-8'))
+	
+	# Read response
+	jstr = read_string(sock)
+	sock.close()
+	if jstr is None:
+		return None
+	try:
+		return json.loads(jstr)
+	except:
+		return None
 
 def push_all(addr, year):
 	for competition in database.list_competitions(year):
@@ -69,16 +79,28 @@ def push(addr, competition):
 	write_msg_new(addr, REQUEST_PUSH, {"events": database.get_events(competition)})
 
 def pull(addr, competition):
-	write_msg_new(addr, REQUEST_PULL, {"competition": competition})
+	resp = write_msg_new(addr, REQUEST_PULL, {"competition": competition})
+	if resp != None:
+		pass	# TODO: Handle pull
 
 def request_matches(addr, competition):
-	write_msg_new(addr, REQUEST_DUMP_MATCHES, {"competition": competition})
+	resp = write_msg_new(addr, REQUEST_DUMP_MATCHES, {"competition": competition})
+	if resp != None:
+		pass	# TODO: Handle matches
 
 def request_comps(addr, year):
-	write_msg_new(addr, REQUEST_LIST_COMPETITIONS, {"year": year})
+	resp = write_msg_new(addr, REQUEST_LIST_COMPETITIONS, {"year": year})
+	if resp != None:
+		pass	# TODO: Handle comps
 
 def handshake(sock):
-	write_msg(sock, REQUEST_HANDSHAKE, {"peers": peers})
+	resp = write_msg(sock, REQUEST_HANDSHAKE, {"peers": peers})
+	handle_handshake(resp)
+
+def handle_handshake(data):
+	# Add fed peers
+	for peer in data["peers"]:
+		fed_peers.append(peer)
 
 def start_server():
 	# Start the thread as a daemon, so it will stop when the main thread exits
@@ -153,9 +175,7 @@ def handle_request(sock):
 			sock.close()
 			return
 		
-		# Add fed peers
-		for peer in data["peers"]:
-			fed_peers.append(peer)
+		handle_handshake(data)
 		write_msg(sock, RESPONSE_OK, {"peers": peers})
 		
 	if data["type"] == REQUEST_PUSH:
