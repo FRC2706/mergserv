@@ -146,7 +146,7 @@ def handle_request(sock):
 		write_peers()
 	
 	# Switch by request type
-	if data["handshake"] == REQUEST_HANDSHAKE:
+	if data["type"] == REQUEST_HANDSHAKE:
 		if not "peers" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {})
 			sock.close()
@@ -211,6 +211,7 @@ def peerscan():
 	
 	# Discover peers
 	tmp_peers = fed_peers
+	tmp_peers = tmp_peers + peers
 	tmp_peers = tmp_peers + expand_lan()
 	for peer in man_peers:
 		if not peer in peers:
@@ -225,9 +226,10 @@ def peerscan():
 			sock.settimeout(PEER_CONNECT_TIMEOUT)
 			sock.connect((peer, PORT))
 			sock.settimeout(None)
-			peers.append(peer)
+			if not peer in peers:
+				peers.append(peer)
 			print("Added peer '" + peer + "'")
-			sock.close()
+			handshake(sock)
 		except:
 			if peer in peers:
 				print("Removed peer '" + peer + "'")
@@ -274,7 +276,8 @@ try:
 	for line in f:
 		line = line.strip()
 		if not line == "" and not line.startswith("#"):
-			peers.append(line)
+			if not line in peers:
+				peers.append(line)
 	f.close()
 except:
 	pass
