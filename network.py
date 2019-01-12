@@ -9,6 +9,7 @@ import ifaddr
 API_VERSION_MAJOR = 0
 API_VERSION_MINOR = 0
 
+REQUEST_HANDSHAKE = "shake"
 REQUEST_PUSH = "push"
 REQUEST_PULL = "pull"
 REQUEST_DUMP_MATCHES = "dump_matches"
@@ -40,7 +41,8 @@ def read_string(sock):
 			return val
 		val+= char
 
-def write_msg(addr, request_type, extra):
+def write_msg_new(addr, request_type, extra):
+	global peers
 	try:
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sock.connect((peer, PORT))
@@ -49,6 +51,9 @@ def write_msg(addr, request_type, extra):
 			peers.remove(addr)
 			print("Removed peer '" + peer + "'")
 		return
+	write_msg(sock, request_type, extra)
+
+def write_msg(sock, request_type, extra):
 	data = extra.copy()
 	data["version_major"] = API_VERSION_MAJOR
 	data["version_minor"] = API_VERSION_MINOR
@@ -61,16 +66,19 @@ def push_all(addr, year):
 		push(addr, competition["competition"])
 
 def push(addr, competition):
-	write_msg(addr, REQUEST_PUSH, {"events": database.get_events(competition)})
+	write_msg_new(addr, REQUEST_PUSH, {"events": database.get_events(competition)})
 
 def pull(addr, competition):
-	write_msg(addr, REQUEST_PULL, {"competition": competition})
+	write_msg_new(addr, REQUEST_PULL, {"competition": competition})
 
 def request_matches(addr, competition):
-	write_msg(addr, REQUEST_DUMP_MATCHES, {"competition": competition})
+	write_msg_new(addr, REQUEST_DUMP_MATCHES, {"competition": competition})
 
 def request_comps(addr, year):
-	write_msg(addr, REQUEST_LIST_COMPETITIONS, {"year": year})
+	write_msg_new(addr, REQUEST_LIST_COMPETITIONS, {"year": year})
+
+def handshake(sock):
+	write_msg(sock, REQUEST_HANDSHAKE, {"peers": peers})
 
 def start_server():
 	# Start the thread as a daemon, so it will stop when the main thread exits
@@ -97,6 +105,8 @@ def server():
 	print("Network stopped!")
 
 def handle_request(sock):
+	global peers
+	global fed_peers
 	
 	# Add to our peers list if they aren't in it already
 	ip = sock.getpeername()[0]
@@ -129,7 +139,24 @@ def handle_request(sock):
 		sock.close()
 		return
 	
+	# Add to peers list
+	if not ip in peers:
+		peers.append(ip)
+		print("Added peer '" + ip + "'")
+		write_peers()
+	
 	# Switch by request type
+	if data["handshake"] == REQUEST_HANDSHAKE:
+		if not "peers" in data:
+			write_msg(sock, RESPONSE_UNKNOWN, {})
+			sock.close()
+			return
+		
+		# Add fed peers
+		for peer in data["peers"]:
+			fed_peers.append(peer)
+		write_msg(sock, RESPONSE_OK, {"peers": peers})
+		
 	if data["type"] == REQUEST_PUSH:
 		
 		# Perform push
@@ -172,9 +199,6 @@ def handle_request(sock):
 		comps = database.list_competitions(data["year"])
 		write_msg(sock, RESPONSE_OK, {"competitions": comps})
 		
-	elif data["type"] == REQUEST_PEER_LIST:
-		writemsg(sock, RESPONSE_OK, peers)
-		
 	else:
 		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
 	peers.remove(peer)
@@ -183,12 +207,15 @@ def handle_request(sock):
 # Find peers and connect to them
 def peerscan():
 	global peers
+	global fed_peers
 	
 	# Discover peers
-	tmp_peers = expand_lan()
+	tmp_peers = fed_peers
+	tmp_peers = tmp_peers + expand_lan()
 	for peer in man_peers:
 		if not peer in peers:
 			tmp_peers.append(peer)
+	fed_peers = []
 	
 	# Connect to discovered nodes
 	for peer in tmp_peers:
@@ -222,6 +249,9 @@ def write_peers():
 	for peer in peers:
 		f.write(peer + "\n")
 	f.close()
+
+# Fed peers
+fed_peers = []
 
 # Load man_peers
 man_peers = []
