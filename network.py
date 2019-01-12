@@ -58,7 +58,7 @@ def write_msg(sock, request_type, extra):
 	data["version_major"] = API_VERSION_MAJOR
 	data["version_minor"] = API_VERSION_MINOR
 	data["type"] = request_type
-	jstr = json.dumps(data)
+	jstr = json.dumps(data) + "\00"
 	sock.sendall(jstr.encode('utf-8'))
 
 def push_all(addr, year):
@@ -122,6 +122,7 @@ def handle_request(sock):
 	except:
 		# Client send invalid json
 		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
+		sock.close()
 		return
 	
 	# Check that request is formatted correctly
@@ -201,7 +202,6 @@ def handle_request(sock):
 		
 	else:
 		write_msg(sock, RESPONSE_INVALID_REQUEST, {})
-	peers.remove(peer)
 	sock.close()
 
 # Find peers and connect to them
