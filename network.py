@@ -95,6 +95,8 @@ def request_comps(addr, year):
 
 def handshake(sock):
 	resp = write_msg(sock, REQUEST_HANDSHAKE, {"peers": peers})
+	if resp["type"] != RESPONSE_OK or not "peers" in resp:
+		return
 	handle_handshake(resp)
 
 def handle_handshake(data):
