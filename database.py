@@ -21,7 +21,16 @@ def init_database():
 def get_events(competition_name):
 	conn, db = get_db()
 	db.execute("SELECT * FROM events WHERE competition=?", (competition_name,))
-	return db.fetchall()
+	results = db.fetchall()
+	columns = [x[0] for x in db.description]
+	ret = []
+	for i in range(len(results)):
+		temp = {}
+		for j in range(len(columns)):
+			temp[columns[j]] = results[i][j]
+		ret.append(temp)
+	print(ret)
+	return ret
 
 def get_scores(competition_name, last_match_num):
 	conn, db = get_db()
@@ -36,7 +45,15 @@ def dump_matches(competition_name):
 def list_competitions(year):
 	conn, db = get_db()
 	db.execute("SELECT * FROM competitions WHERE year=?", (year,))
-	return db.fetchall()
+	results = db.fetchall()
+	columns = [x[0] for x in db.description]
+	ret = []
+	for i in range(len(results)):
+		temp = {}
+		for j in range(len(columns)):
+			temp[columns[j]] = results[i][j]
+		ret.append(temp)
+	return ret
 
 '''
 Return codes:
