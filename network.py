@@ -58,9 +58,9 @@ def write_msg_new(addr, request_type, extra):
 	global peers
 	try:
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		sock.connect((peer, PORT))
+		sock.connect((addr, PORT))
 	except:
-		remove_peer(peer)
+		remove_peer(addr)
 		return None
 	return write_msg(sock, request_type, extra, True)
 

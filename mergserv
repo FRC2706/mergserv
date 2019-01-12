@@ -2,6 +2,7 @@
 
 import network
 import sys
+from datetime import datetime
 
 args = sys.argv[1:]
 
@@ -28,7 +29,8 @@ while True:
             network.start_server()
 
     elif command == "sync":
-        pass
+        for peer in network.peers:
+            network.push_all(peer, datetime.now().year)
 
     elif command == "listpeers":
         print("Server has %d peers" % len(network.peers))
