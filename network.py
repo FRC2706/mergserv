@@ -91,7 +91,7 @@ def push_all(addr, year):
 		push(addr, competition["competition"])
 
 def push(addr, competition):
-	write_msg_new(addr, REQUEST_PUSH, {"events": database.get_events(competition)})
+	write_msg_new(addr, REQUEST_PUSH, {"events": database.get_events(competition), "competition": competition})
 
 def pull(addr, competition):
 	resp = write_msg_new(addr, REQUEST_PULL, {"competition": competition})
@@ -258,7 +258,6 @@ def peerscan():
 			sock.connect((peer, PORT))
 			sock.settimeout(None)
 			add_peer(peer)
-			print("Added peer '" + peer + "'")
 			handshake(sock)
 		except:
 			remove_peer(peer)
