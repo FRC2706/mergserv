@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 import network
+import database
 import sys
 from datetime import datetime
+import json
 
 args = sys.argv[1:]
 
@@ -13,7 +15,7 @@ while True:
 
     if command == "net off":
         if not network.ENABLED:
-            print("Networking is already disabled. enable it with 'enable-networking'")
+            print("Networking is already disabled. enable it with 'net on'")
         else:
             # Disable networking somehow
             print("Disabling network...")
@@ -21,7 +23,7 @@ while True:
 
     elif command == "net on":
         if network.ENABLED:
-            print("Networking is already enabled. Disable it with 'disable-networking'")
+            print("Networking is already enabled. Disable it with 'net off'")
         else:
             # Re-Enable networking somehow
             print("Enabling network...")
@@ -35,17 +37,26 @@ while True:
     elif command == "listpeers":
         print("Server has %d peers" % len(network.peers))
         for peer in network.peers:
-            print(peer)
+            print("\t" + str(peer))
 
     elif command.startswith("addpeer"):
         peer = command.split(" ")[1]
-        if network.verifypeer(peer):
-            network.peers.append(peer)
-            print("Peer test successful, added to peerlist")
+        network.add_peer(peer)
+
+    elif command.startswith("mkevent"):
+        competition = command.split(" ")[1]
+        jstr = command[command.find("{"):command.rfind("}")+1]
+        try:
+            event = json.loads(jstr)
+            print(database.push_events(competition, [event]))
+        except Exception as e:
+            print(e)
         else:
-            print("Peer test failed.")
+            print("inserted into database")
 
-
+    elif command == "quit":
+        network.ENABLED = False
+        break
 
     elif command == "":
         pass
