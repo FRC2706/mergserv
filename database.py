@@ -18,9 +18,12 @@ def init_database():
 		except Exception as e:
 			print(e)
 
-def get_events(competition_name):
+def get_events(competition_name, match_number=None):
 	conn, db = get_db()
-	db.execute("SELECT * FROM events WHERE competition=?", (competition_name,))
+	if match_number is None:
+		db.execute("SELECT * FROM events WHERE competition=?", (competition_name,))
+	else:
+		db.execute("SELECT * FROM events WHERE competition=? AND match_number=?", (competition_name,match_number))
 	results = db.fetchall()
 	columns = [x[0] for x in db.description]
 	ret = []
@@ -29,7 +32,6 @@ def get_events(competition_name):
 		for j in range(len(columns)):
 			temp[columns[j]] = results[i][j]
 		ret.append(temp)
-	print(ret)
 	return ret
 
 def get_scores(competition_name, last_match_num):

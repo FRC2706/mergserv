@@ -54,6 +54,18 @@ while True:
         else:
             print("inserted into database")
 
+    elif command.startswith("ftevent"):
+        query = command.split(" ")[1]
+        if query == "match":
+            competition = command.split(" ")[2]
+            match = command.split(" ")[3]
+            print(competition, match)
+            print(database.get_events(competition, match))
+        elif query == "competition":
+            competition = command.split(" ")[2]
+            print(competition)
+            print(database.get_events(competition))
+
     elif command == "quit":
         network.ENABLED = False
         break
