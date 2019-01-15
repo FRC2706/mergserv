@@ -16,7 +16,7 @@ def init_database():
 		try:
 			db.execute(table)
 		except Exception as e:
-			print(e)
+			print("[Database] %s" % str(e))
 
 def get_team(team):
 	conn, db = get_db()

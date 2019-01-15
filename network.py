@@ -5,6 +5,8 @@ import json
 import database
 import ipaddress
 import ifaddr
+import time
+from math import ceil
 
 API_VERSION_MAJOR = 0
 API_VERSION_MINOR = 0
@@ -21,6 +23,7 @@ RESPONSE_UNKNOWN = "unknown"
 RESPONSE_INVALID_REQUEST = "invalid"
 RESPONSE_SIGNATURE_REJECTED = "unauthorized"
 
+PEERSCAN_THREADS = 512 # Make higher to go faster. There's really no limit since network operations aren't CPU heavy
 PEER_CONNECT_TIMEOUT = 1
 SOCKET_TIMEOUT = 3
 PORT = 31465
@@ -144,7 +147,7 @@ def server():
 	ss.bind(("0.0.0.0", PORT))
 	ss.listen()
 	thread.start_new_thread(peerscan, ())
-	print("Network started!")
+	print("[Network] Network started!")
 	while True:
 		if ENABLED:
 			try:
@@ -156,7 +159,7 @@ def server():
 		else:
 			break
 	scan_timer.cancel()
-	print("Network stopped!")
+	print("[Network] Network stopped!")
 
 def handle_request(sock):
 	global peers
@@ -245,6 +248,7 @@ def handle_request(sock):
 
 # Find peers and connect to them
 def peerscan():
+	start = time.time()
 	global peers
 	global fed_peers
 	global scan_timer
@@ -252,14 +256,31 @@ def peerscan():
 	# Discover peers
 	tmp_peers = fed_peers
 	tmp_peers = tmp_peers + peers
-	#tmp_peers = tmp_peers + expand_lan()
+	tmp_peers = tmp_peers + expand_lan()
 	for peer in man_peers:
 		if not peer in peers:
 			tmp_peers.append(peer)
 	fed_peers = []
 	
 	# Connect to discovered nodes
-	for peer in tmp_peers:
+	chunk_size = ceil(len(tmp_peers)/PEERSCAN_THREADS)
+	ranges = [tmp_peers[i:i + chunk_size] for i in range(0, len(tmp_peers), chunk_size)]
+	lthreads = []
+	for i in range(0, len(ranges)):
+		peer_range = [str(ip) for ip in ranges[i]]
+		lthreads.append(threading.Thread(target=scan_range, args=(peer_range,)))
+		lthreads[i].start()
+
+	print("[Network] Scanning network with %d threads, waiting until finished..." % len(lthreads))
+	for thread in lthreads:
+		thread.join()
+
+	scan_timer = threading.Timer(SCAN_INTERVAL, peerscan)
+	scan_timer.start()
+	print("[Network] Finished LAN scan in %.2f seconds" % (time.time() - start))
+
+def scan_range(peer_range):
+	for peer in peer_range:
 		try:
 			# Connect to peer
 			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -271,16 +292,16 @@ def peerscan():
 		except:
 			remove_peer(peer)
 	write_peers()
-	scan_timer = threading.Timer(SCAN_INTERVAL, peerscan)
-	scan_timer.start()
 
 def expand_lan():
 	addrs = []
 	for adapter in ifaddr.get_adapters():
 		for localhost in adapter.ips:
-			if type(localhost.ip) != str:
+			if type(localhost.ip) != str or str(localhost.ip) == "127.0.0.1":
 				continue
 			for ip in ipaddress.ip_network(localhost.ip + "/24", False).hosts():
+				if str(ip) == localhost.ip:
+					continue
 				addrs.append(ip)
 	return addrs
 
