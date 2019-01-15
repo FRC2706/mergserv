@@ -69,6 +69,8 @@ def write_msg(sock, request_type, extra, wait_for_response):
 	data["version_major"] = API_VERSION_MAJOR
 	data["version_minor"] = API_VERSION_MINOR
 	data["type"] = request_type
+	data["team"] = team_number
+	data['sn'] = crypto.sign_row(data, seed)
 	jstr = json.dumps(data) + "\00"
 	sock.sendall(jstr.encode('utf-8'))
 	
@@ -82,7 +84,15 @@ def write_msg(sock, request_type, extra, wait_for_response):
 	if jstr is None:
 		return None
 	try:
-		return json.loads(jstr)
+		data = json.loads(jstr)
+		team_row = database.get_team(data['team'])
+		if not 'public_key' in team_row:
+			return None
+		signature = data['sn']
+		del data['sn']
+		if not crypto.verify_row(data, team_row['public_key'], signature):
+			return None
+		return data
 	except:
 		return None
 

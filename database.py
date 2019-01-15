@@ -18,6 +18,14 @@ def init_database():
 		except Exception as e:
 			print(e)
 
+def get_team(team):
+	conn, db = get_db()
+	db.execute("SELECT * FROM teams WHERE team=?", (team,))
+	res = db.fetchall()
+	if len(res) < 1:
+		return {}
+	return res[0]
+
 def get_events(competition_name):
 	conn, db = get_db()
 	db.execute("SELECT * FROM events WHERE competition=?", (competition_name,))
