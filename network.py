@@ -26,7 +26,7 @@ RESPONSE_INVALID_REQUEST = "invalid"
 RESPONSE_SIGNATURE_REJECTED = "unauthorized"
 
 PEERSCAN_THREADS = 512 # Make higher to go faster. There's really no limit since network operations aren't CPU heavy
-PEER_CONNECT_TIMEOUT = 1
+PEER_CONNECT_TIMEOUT = 5
 SOCKET_TIMEOUT = 3
 PORT = 31465
 
