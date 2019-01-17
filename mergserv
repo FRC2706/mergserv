@@ -5,6 +5,7 @@ import database
 import sys
 from datetime import datetime
 import json
+import log
 
 args = sys.argv[1:]
 
@@ -15,18 +16,18 @@ while True:
 
     if command == "net off":
         if not network.ENABLED:
-            print("Networking is already disabled. enable it with 'net on'")
+            log.info("net", "Networking is already disabled. enable it with 'net on'")
         else:
             # Disable networking somehow
-            print("Disabling network...")
+            log.info("net", "Disabling network...")
             network.ENABLED = False
 
     elif command == "net on":
         if network.ENABLED:
-            print("Networking is already enabled. Disable it with 'net off'")
+            log.info("net", "Networking is already enabled. Disable it with 'net off'")
         else:
             # Re-Enable networking somehow
-            print("Enabling network...")
+            log.info("net", "Enabling network...")
             network.ENABLED = True
             network.start_server()
 
@@ -35,7 +36,7 @@ while True:
             network.push_all(peer, datetime.now().year)
 
     elif command == "listpeers":
-        print("Server has %d peers" % len(network.peers))
+        log.info("listpeers", "Server has %d peers" % len(network.peers))
         for peer in network.peers:
             print("\t" + str(peer))
 
@@ -48,23 +49,18 @@ while True:
         jstr = command[command.find("{"):command.rfind("}")+1]
         try:
             event = json.loads(jstr)
-            print(database.push_events(competition, [event]))
         except Exception as e:
-            print(e)
+            log.error("mkevent", e)
         else:
-            print("inserted into database")
+            log.ok("mkevent","inserted into database")
 
     elif command.startswith("ftevent"):
         query = command.split(" ")[1]
         if query == "match":
             competition = command.split(" ")[2]
             match = command.split(" ")[3]
-            print(competition, match)
-            print(database.get_events(competition, match))
         elif query == "competition":
             competition = command.split(" ")[2]
-            print(competition)
-            print(database.get_events(competition))
 
     elif command == "quit":
         network.ENABLED = False
@@ -73,4 +69,4 @@ while True:
     elif command == "":
         pass
     else:
-        print("Unrecognized command.")
+        log.error("main", "Unrecognized command.")

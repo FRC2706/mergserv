@@ -7,6 +7,8 @@ import ipaddress
 import ifaddr
 import time
 from math import ceil
+import log
+from datetime import datetime
 
 API_VERSION_MAJOR = 0
 API_VERSION_MINOR = 0
@@ -37,13 +39,14 @@ def add_peer(peer):
 	global peers
 	if not peer in peers:
 		peers.append(peer)
-		print("Added peer '" + peer + "'")
+		log.ok("Network","Added peer '" + peer + "'")
+		push_all(peer, datetime.now().year)
 
 def remove_peer(peer):
 	global peers
 	if peer in peers:
 		peers.remove(peer)
-		print("Removed peer '" + peer + "'")
+		log.ok("Network","Removed peer '" + peer + "'")
 
 def read_string(sock):
 	val = ""
@@ -147,7 +150,7 @@ def server():
 	ss.bind(("0.0.0.0", PORT))
 	ss.listen()
 	thread.start_new_thread(peerscan, ())
-	print("[Network] Network started!")
+	log.ok("Network","Network started!")
 	while True:
 		if ENABLED:
 			try:
@@ -159,7 +162,7 @@ def server():
 		else:
 			break
 	scan_timer.cancel()
-	print("[Network] Network stopped!")
+	log.ok("Network","Network stopped!")
 
 def handle_request(sock):
 	global peers
@@ -271,13 +274,13 @@ def peerscan():
 		lthreads.append(threading.Thread(target=scan_range, args=(peer_range,)))
 		lthreads[i].start()
 
-	print("[Network] Scanning network with %d threads, waiting until finished..." % len(lthreads))
+	log.ok("Network","Scanning network with %d threads, waiting until finished..." % len(lthreads))
 	for thread in lthreads:
 		thread.join()
 
 	scan_timer = threading.Timer(SCAN_INTERVAL, peerscan)
 	scan_timer.start()
-	print("[Network] Finished LAN scan in %.2f seconds" % (time.time() - start))
+	log.ok("Network","Finished LAN scan in %.2f seconds, rescaning in %d seconds." % (time.time() - start, SCAN_INTERVAL))
 
 def scan_range(peer_range):
 	for peer in peer_range:
