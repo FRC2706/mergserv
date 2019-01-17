@@ -4,9 +4,9 @@ import nacl.signing
 import nacl.encoding
 
 # Returns signature for row
-def sign_row(row, private):
+def sign_row(row):
 	jstr = json.dumps(obj)
-	signing_key = nacl.signing.SigningKey(private, nacl.encoding.Base64Encoder)
+	signing_key = nacl.signing.SigningKey(seed, nacl.encoding.Base64Encoder)
 	signature = signing_key.sign(jstr.encode('utf-8'))
 	return base64.b64encode(signature.signature).decode('utf-8')
 

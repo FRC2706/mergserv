@@ -78,7 +78,7 @@ def write_msg(sock, request_type, extra, wait_for_response):
 	data["version_minor"] = API_VERSION_MINOR
 	data["type"] = request_type
 	data["team"] = team_number
-	data['sn'] = crypto.sign_row(data, seed)
+	data['sn'] = crypto.sign_row(data)
 	jstr = json.dumps(data) + "\00"
 	sock.sendall(jstr.encode('utf-8'))
 	
