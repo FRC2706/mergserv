@@ -62,6 +62,11 @@ while True:
         elif query == "competition":
             competition = command.split(" ")[2]
 
+    elif command == "rescan":
+        network.scan_timer.cancel()
+        network.peerscan()
+
+
     elif command == "quit":
         network.ENABLED = False
         break
