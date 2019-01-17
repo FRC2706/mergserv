@@ -21,3 +21,37 @@ def verify_row(row, public, signature):
 		return True
 	except:
 		return False
+
+
+
+ 
+def log_info(message):
+        print("[INFO]: " + message)
+ 
+def log_warning(message):
+        print("[WARNING]: " + message)
+ 
+def log_error(message):
+        print("[ERROR]: " + message)
+
+
+
+
+
+
+# Load the private key
+seed = None
+pubkey = None
+try:
+        with open('private.key') as keyf:
+                seed = keyf.read().strip()
+        signing_key = nacl.signing.SigningKey(seed=seed, encoder=nacl.encoding.URLSafeBase64Encoder)
+        pubkey = signing_key.verify_key.encode(encoder=nacl.encoding.URLSafeBase64Encoder).decode('utf-8')
+except:
+        log_warning("Failed to load private key, generating new key...")
+        signing_key = nacl.signing.SigningKey.generate()
+        pubkey = signing_key.verify_key.encode(encoder=nacl.encoding.URLSafeBase64Encoder).decode('utf-8')
+        seed = signing_key.encode(encoder=nacl.encoding.URLSafeBase64Encoder).decode('utf-8')
+        with open('private.key', 'w') as keyf:
+                keyf.write(seed)
+log_info("Loaded key")

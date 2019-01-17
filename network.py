@@ -3,6 +3,7 @@ import _thread as thread
 import threading
 import json
 import database
+import crypto
 import ipaddress
 import ifaddr
 import time
@@ -30,6 +31,7 @@ PEER_CONNECT_TIMEOUT = 1
 SOCKET_TIMEOUT = 3
 PORT = 31465
 
+team_number = 2706
 peers = []
 scan_timer = None
 SCAN_INTERVAL = 300 # seconds
