@@ -22,15 +22,30 @@ def init_database():
 def get_team(team):
 	conn, db = get_db()
 	db.execute("SELECT * FROM teams WHERE team=?", (team,))
-	res = db.fetchall()
-	if len(res) < 1:
-		return {}
-	return res[0]
+	results = db.fetchall()
+	columns = [x[0] for x in db.description]
+	ret = []
+	for i in range(len(results)):
+		temp = {}
+		for j in range(len(columns)):
+			temp[columns[j]] = results[i][j]
+		ret.append(temp)
+	print(ret)
+	return ret[0] if len(ret) > 0 else {}
 
 def get_teams():
 	conn, db = get_db()
 	db.execute("SELECT * FROM teams")
-	return db.fetchall()
+	results = db.fetchall()
+	columns = [x[0] for x in db.description]
+	ret = []
+	for i in range(len(results)):
+		temp = {}
+		for j in range(len(columns)):
+			temp[columns[j]] = results[i][j]
+		ret.append(temp)
+	print(ret)
+	return ret
 
 def get_events(competition_name, match_number=None):
 	conn, db = get_db()
