@@ -122,18 +122,31 @@ def get_db():
 	return (conn, conn.cursor())
 
 def insert_competition(code, year):
-	conn, db = get_db()
-	db.execute("INSERT INTO competitions (year, competition) VALUES (?, ?)", (year, code))
-	conn.commit()
+	try:
+		conn, db = get_db()
+		db.execute("INSERT INTO competitions (year, competition) VALUES (?, ?)", (year, code))
+		conn.commit()
+		return True
+	except:
+		return False
 
 def insert_match(number, event, red, blue):
-	conn, db = get_db()
-	db.execute("INSERT INTO matches (match_number, competition, red1, red2, red3, blue1, blue2, blue3) VALUES (?,?,?,?,?,?,?,?)", (number, event, red[0], red[1], red[2], blue[0], blue[1], blue[2]))
-	conn.commit()
+	try:
+		conn, db = get_db()
+		db.execute("INSERT INTO matches (match_number, competition, red1, red2, red3, blue1, blue2, blue3) VALUES (?,?,?,?,?,?,?,?)", (number, event, red[0], red[1], red[2], blue[0], blue[1], blue[2]))
+		conn.commit()
+		return True
+	except:
+		return False
 
 def insert_team(number, name, key):
-	conn, db = get_db()
-	db.execute("INSERT INTO teams (team, name, public_key) VALUES (?, ?, ?)", (number, name, key))
-	conn.commit()
+	try:
+		conn, db = get_db()
+		db.execute("INSERT INTO teams (team, name, public_key) VALUES (?, ?, ?)", (number, name, key))
+		conn.commit()
+		return True
+	except:
+		# Probably the Unique Constraint
+		return False
 
 init_database()
