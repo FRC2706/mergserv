@@ -7,7 +7,7 @@ import log
 # Returns signature for row
 def sign_row(row):
 	jstr = json.dumps(row)
-	signing_key = nacl.signing.SigningKey(seed, nacl.encoding.Base64Encoder)
+	signing_key = nacl.signing.SigningKey(seed, nacl.encoding.URLSafeBase64Encoder)
 	signature = signing_key.sign(jstr.encode('utf-8'))
 	return base64.b64encode(signature.signature).decode('utf-8')
 
@@ -16,7 +16,7 @@ def verify_row(row, public, signature):
 	obj = oobj.copy()
 	signature = base64.b64decode(signature.encode('utf-8'))
 	jstr = json.dumps(obj)
-	verify_key = nacl.signing.VerifyKey(public, encoder=nacl.encoding.Base64Encoder)
+	verify_key = nacl.signing.VerifyKey(public, encoder=nacl.encoding.URLSafeBase64Encoder)
 	try:
 		verify_key.verify(jstr.encode('utf-8'), signature)
 		return True
