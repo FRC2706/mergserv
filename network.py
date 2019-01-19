@@ -134,7 +134,6 @@ def request_season(addr, year):
 		for competition in resp["competitions"]:
 			database.insert_competition(competition["competition"], year)
 		for team in resp["teams"]:
-			print(team)
 			if resp["team"] == team_number:
 				pubkey = team["public_key"]
 			else:
