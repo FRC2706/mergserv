@@ -136,5 +136,6 @@ def insert_match(number, event, red, blue):
 def insert_team(number, name, key):
 	conn, db = get_db()
 	db.execute("INSERT INTO teams (team, name, public_key) VALUES (?, ?, ?)", (number, name, key))
+	conn.commit()
 
 init_database()
