@@ -32,10 +32,10 @@ try:
         signing_key = nacl.signing.SigningKey(seed=seed, encoder=nacl.encoding.URLSafeBase64Encoder)
         pubkey = signing_key.verify_key.encode(encoder=nacl.encoding.URLSafeBase64Encoder).decode('utf-8')
 except:
-        log.warn("Failed to load private key, generating new key...")
+        log.warn("CRYPTO", "Failed to load private key, generating new key...")
         signing_key = nacl.signing.SigningKey.generate()
         pubkey = signing_key.verify_key.encode(encoder=nacl.encoding.URLSafeBase64Encoder).decode('utf-8')
         seed = signing_key.encode(encoder=nacl.encoding.URLSafeBase64Encoder).decode('utf-8')
         with open('private.key', 'w') as keyf:
                 keyf.write(seed)
-log.info("Loaded key")
+log.info("CRYPTO", "Loaded key: " + pubkey)
