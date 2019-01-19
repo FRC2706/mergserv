@@ -42,6 +42,7 @@ def add_peer(peer):
 	if not peer in peers:
 		peers.append(peer)
 		log.ok("Network","Added peer '" + peer + "'")
+		request_season(peer, datetime.now().year)
 		push_all(peer, datetime.now().year)
 
 def remove_peer(peer):
