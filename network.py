@@ -35,12 +35,13 @@ PORT = 31465
 team_number = 2706
 peers = []
 scan_timer = None
+localips = []
 SCAN_INTERVAL = 300 # seconds
 ENABLED = True
 
 def add_peer(peer):
 	global peers
-	if not peer in peers:
+	if not peer in peers and not peer in localips:
 		peers.append(peer)
 		log.ok("Network","Added peer '" + peer + "'")
 		request_season(peer, datetime.now().year)
@@ -311,6 +312,8 @@ def expand_lan():
 	addrs = []
 	for adapter in ifaddr.get_adapters():
 		for localhost in adapter.ips:
+			if str(localhost.ip) not in localips:
+				localips.append(str(localhost.ip))
 			if type(localhost.ip) != str or str(localhost.ip) == "127.0.0.1":
 				continue
 			for ip in ipaddress.ip_network(localhost.ip + "/24", False).hosts():
