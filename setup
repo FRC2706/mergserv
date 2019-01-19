@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+
+import database
+import sys
+
+if len(sys.argv) != 4:
+	print("Usage: " + sys.argv[0] + " [team number] [name] [public key]")
+	exit(1)
+
+conn, db = database.get_db()
+db.execute("INSERT INTO teams (team, name, public_key) VALUES (?, ?, ?)", (sys.argv[1], sys.argv[2], sys.argv[3]))
+conn.commit()
