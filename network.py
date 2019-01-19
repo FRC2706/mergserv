@@ -87,29 +87,24 @@ def write_msg(sock, request_type, extra, wait_for_response):
 	
 	if not wait_for_response:
 		sock.close()
-		print("Line 91")
 		return None
 	
 	# Read response
 	jstr = read_string(sock)
 	sock.close()
 	if jstr is None:
-		print("Line 98")
 		return None
 	try:
 		data = json.loads(jstr)
 		team_row = database.get_team(data['team'])
 		if not 'public_key' in team_row:
-			print("Line 104")
 			return None
 		signature = data['sn']
 		del data['sn']
 		if not crypto.verify_row(data, team_row['public_key'], signature):
-			print("Line 109")
 			return None
 		return data
 	except:
-		print("Line 112")
 		traceback.print_exc()
 		return None
 
@@ -139,6 +134,7 @@ def request_season(addr, year):
 		for competition in resp["competitions"]:
 			database.insert_competition(competition["competition"], year)
 		for team in resp["teams"]:
+			print(team)
 			if resp["team"] == team_number:
 				pubkey = team["public_key"]
 			else:
