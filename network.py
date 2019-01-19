@@ -18,7 +18,7 @@ REQUEST_HANDSHAKE = "shake"
 REQUEST_PUSH = "push"
 REQUEST_PULL = "pull"
 REQUEST_DUMP_MATCHES = "dump_matches"
-REQUEST_LIST_COMPETITIONS = "list_comps"
+REQUEST_SEASON = "dump_season"
 
 RESPONSE_OK = "ok"
 RESPONSE_VERSION_MISMATCH = "version_mismatch"
@@ -120,15 +120,21 @@ def request_matches(addr, competition):
 	resp = write_msg_new(addr, REQUEST_DUMP_MATCHES, {"competition": competition})
 	if resp != None and resp["type"] == RESPONSE_OK and "matches" in resp:
 		for match in resp["matches"]:
-				red = [match["red1"], match["red2"], match["red3"]]
-				blue = [match["blue1"], match["blue2"], match["blue3"]]
-				database.insert_match(match["match_number"], competition, red, blue)
+			red = [match["red1"], match["red2"], match["red3"]]
+			blue = [match["blue1"], match["blue2"], match["blue3"]]
+			database.insert_match(match["match_number"], competition, red, blue)
 
-def request_comps(addr, year):
-	resp = write_msg_new(addr, REQUEST_LIST_COMPETITIONS, {"year": year})
+def request_season(addr, year):
+	resp = write_msg_new(addr, REQUEST_SEASON, {"year": year})
 	if resp != None and resp["type"] == RESPONSE_OK and "competitions" in resp:
 		for competition in resp["competitions"]:
-				database.insert_competition(competition["competition"], year)
+			database.insert_competition(competition["competition"], year)
+		for team in resp["teams"]:
+			if resp["team"] == team_number:
+				pubkey = team["public_key"]
+			else:
+				pubkey = None
+			database.insert_team(team["team"], team["name"], pubkey)
 
 def handshake(sock):
 	resp = write_msg(sock, REQUEST_HANDSHAKE, {"peers": peers}, True)
@@ -241,13 +247,12 @@ def handle_request(sock):
 		matches = database.dump_matches(data["competition"])
 		write_msg(sock, RESPONSE_OK, {"matches": matches}, False)
 		
-	elif data["type"] == REQUEST_LIST_COMPETITIONS:
+	elif data["type"] == REQUEST_SEASON:
 		if not "year" in data:
 			write_msg(sock, RESPONSE_UNKNOWN, {}, False)
 			return
 		comps = database.list_competitions(data["year"])
-		write_msg(sock, RESPONSE_OK, {"competitions": comps}, False)
-		
+		write_msg(sock, RESPONSE_OK, {"competitions": comps, "teams": database.get_teams()}, False)
 	else:
 		write_msg(sock, RESPONSE_INVALID_REQUEST, {}, False)
 

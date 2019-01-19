@@ -10,7 +10,7 @@ def init_database():
 		"CREATE TABLE events (sync_time DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL, type VARCHAR(5) NOT NULL, team_number SMALLINT UNSIGNED NOT NULL, match_number TINYINT UNSIGNED NOT NULL, competition VARCHAR(16) NOT NULL, success TINYINT NOT NULL, start_time TINYINT UNSIGNED NOT NULL, end_time TINYINT UNSIGNED NOT NULL, extra VARCHAR(64) NOT NULL, scout_name VARCHAR(16) NOT NULL, scout_team SMALLINT UNSIGNED NOT NULL, signature TEXT NOT NULL)",
 		"CREATE TABLE matches (match TINYINT UNSIGNED NOT NULL, competition VARCHAR(16) NOT NULL, blue1 TINYINT UNSIGNED NOT NULL, blue2 TINYINT UNSIGNED NOT NULL, blue3 TINYINT UNSIGNED NOT NULL, red1 TINYINT UNSIGNED NOT NULL, red2 TINYINT UNSIGNED NOT NULL, red3 TINYINT UNSIGNED NOT NULL)",
 		"CREATE TABLE competitions (competition VARCHAR(16) PRIMARY KEY NOT NULL, year SMALLINT UNSIGNED NOT NULL)",
-		"CREATE TABLE teams (team TINYINT UNSIGNED PRIMARY KEY NOT NULL, public_key TEXT NOT NULL, signature TEXT NOT NULL)"
+		"CREATE TABLE teams (team TINYINT UNSIGNED PRIMARY KEY NOT NULL, name VARCHAR(32) NOT NULL, public_key TEXT)"
 	]
 
 	for table in tables:
@@ -26,6 +26,11 @@ def get_team(team):
 	if len(res) < 1:
 		return {}
 	return res[0]
+
+def get_teams():
+	conn, db = get_db()
+	db.execute("SELECT * FROM teams")
+	return db.fetchall()
 
 def get_events(competition_name, match_number=None):
 	conn, db = get_db()
@@ -112,5 +117,9 @@ def insert_match(number, event, red, blue):
 	conn, db = get_db()
 	db.execute("INSERT INTO matches (match_number, competition, red1, red2, red3, blue1, blue2, blue3) VALUES (?,?,?,?,?,?,?,?)", (number, event, red[0], red[1], red[2], blue[0], blue[1], blue[2]))
 	conn.commit()
+
+def insert_team(number, name, key):
+	conn, db = get_db()
+	db.execute("INSERT INTO teams (team, name, public_key) VALUES (?, ?, ?)", (number, name, key))
 
 init_database()
