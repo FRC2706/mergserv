@@ -31,7 +31,7 @@ def get_team(team):
 			temp[columns[j]] = results[i][j]
 		ret.append(temp)
 	print(ret)
-	return ret[0] if len(ret) > 0 else {}
+	return ret if len(ret) > 0 else {}
 
 def get_teams():
 	conn, db = get_db()
