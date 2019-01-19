@@ -1,6 +1,7 @@
 import sqlite3
 import crypto
 import log
+import traceback
 
 DATABASE = "merg.db"
 
@@ -144,6 +145,7 @@ def insert_team(number, name, key):
 		conn, db = get_db()
 		db.execute("INSERT INTO teams (team, name, public_key) VALUES (?, ?, ?)", (number, name, key))
 		conn.commit()
+		log.ok("Database", "Added team %s to database" % number)
 		return True
 	except:
 		# Probably the Unique Constraint
