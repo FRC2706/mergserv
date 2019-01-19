@@ -39,8 +39,6 @@ SCAN_INTERVAL = 300 # seconds
 ENABLED = True
 
 def add_peer(peer):
-	if peer in [local.ip for local in ifaddr.get_adapters()]:
-		return
 	global peers
 	if not peer in peers:
 		peers.append(peer)
