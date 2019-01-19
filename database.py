@@ -2,6 +2,7 @@ import sqlite3
 import crypto
 import log
 import traceback
+import json
 
 DATABASE = "merg.db"
 
@@ -110,7 +111,7 @@ def push_events(competition, events):
 		ht = db.fetchall()
 		if len(ht) < 1:
 			return 2
-		public = ht[0][1]
+		public = ht[0][2]
 		if public == None or not crypto.verify_row(event, public, signature):
 			return 2
 		stuff = (ev_type, team, match, competition, start, end, success, scout_name, scout_team, signature)
@@ -150,5 +151,25 @@ def insert_team(number, name, key):
 	except:
 		# Probably the Unique Constraint
 		return False
+
+def create_event(event):
+	conn, db = get_db()
+	ev_type = event["type"]
+	team = event["team_number"]
+	match = event["match_number"]
+	start = event["start_time"]
+	end = event["end_time"]
+	success = event["success"]
+	extra = event["extra"]
+	scout_name = event["scout_name"]
+	scout_team = event["scout_team"]
+	competition = event['competition']
+	signature = crypto.sign_row(event)
+	if not crypto.verify_row(event, crypto.pubkey, signature):
+		print("crypto failed")
+		return 2
+	stuff = (ev_type, team, match, competition, start, end, success, extra, scout_name, scout_team, signature)
+	db.execute("INSERT INTO events (type, team_number, match_number, competition, start_time, end_time, success, extra, scout_name, scout_team, signature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", stuff)
+	conn.commit()
 
 init_database()

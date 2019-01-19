@@ -6,6 +6,7 @@ import sys
 from datetime import datetime
 import json
 import log
+import traceback
 
 args = sys.argv[1:]
 
@@ -49,8 +50,10 @@ while True:
         jstr = command[command.find("{"):command.rfind("}")+1]
         try:
             event = json.loads(jstr)
+            database.create_event(event)
         except Exception as e:
-            log.error("mkevent", e)
+            log.error("mkevent","Error while making event")
+            traceback.print_exc()
         else:
             log.ok("mkevent","inserted into database")
 
