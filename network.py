@@ -139,7 +139,7 @@ def request_season(addr, year):
 
 def handshake(sock):
 	resp = write_msg(sock, REQUEST_HANDSHAKE, {"peers": peers}, True)
-	if resp["type"] != RESPONSE_OK or not "peers" in resp:
+	if resp == None or resp["type"] != RESPONSE_OK or not "peers" in resp:
 		return
 	handle_handshake(resp)
 
