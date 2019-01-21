@@ -46,6 +46,9 @@ def add_peer(peer):
 		log.ok("Network","Added peer '" + peer + "'")
 		request_season(peer, datetime.now().year)
 		push_all(peer, datetime.now().year)
+		for comp in database.list_competitions(datetime.now().year):
+			request_matches(peer, comp)
+		print("Finished syncing with '%s" % peer)
 
 def remove_peer(peer):
 	global peers
