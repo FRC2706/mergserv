@@ -38,6 +38,7 @@ while True:
             print("No one to sync with!")
         else:
             for peer in network.peers:
+                print("Starting sync with %s" % peer)
                 network.request_season(peer, year)
                 network.push_all(peer, year)
                 for comp in database.list_competitions(year):

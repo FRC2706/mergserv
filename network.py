@@ -129,6 +129,7 @@ def request_matches(addr, competition):
 	resp = write_msg_new(addr, REQUEST_DUMP_MATCHES, {"competition": competition})
 	if resp != None and resp["type"] == RESPONSE_OK and "matches" in resp:
 		for match in resp["matches"]:
+			print(match)
 			red = [match["red1"], match["red2"], match["red3"]]
 			blue = [match["blue1"], match["blue2"], match["blue3"]]
 			database.insert_match(match["match_number"], competition, red, blue)
