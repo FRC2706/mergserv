@@ -131,6 +131,7 @@ def insert_competition(code, year):
 		conn.commit()
 		return True
 	except:
+		traceback.print_exc()
 		return False
 
 def insert_match(number, event, red, blue):
