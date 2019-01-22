@@ -35,7 +35,12 @@ while True:
     elif command.startswith("sync "):
         year = int(command.split(" ")[1])
         for peer in network.peers:
-            network.push_all(peer, year)
+            request_season(peer, year)
+            push_all(peer, year)
+            for comp in database.list_competitions(year):
+                log.debug("SYNC", "Pulling %s matches from '%s'" % (comp['competition'], peer))
+                request_matches(peer, comp['competition'])
+            print("Finished syncing with '%s" % peer)
 
     elif command == "listpeers":
         log.info("listpeers", "Server has %d peers" % len(network.peers))
