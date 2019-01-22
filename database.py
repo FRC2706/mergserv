@@ -127,6 +127,7 @@ def insert_competition(code, year):
 	try:
 		conn, db = get_db()
 		db.execute("INSERT INTO competitions (year, competition) VALUES (?, ?)", (year, code))
+		print("Tried inserting match %s" % code)
 		conn.commit()
 		return True
 	except:
