@@ -32,9 +32,10 @@ while True:
             network.ENABLED = True
             network.start_server()
 
-    elif command == "sync":
+    elif command.startswith("sync "):
+        year = int(command.split(" ")[1])
         for peer in network.peers:
-            network.push_all(peer, datetime.now().year)
+            network.push_all(peer, year)
 
     elif command == "listpeers":
         log.info("listpeers", "Server has %d peers" % len(network.peers))
