@@ -132,7 +132,7 @@ def request_matches(addr, competition):
 			print(match)
 			red = [match["red1"], match["red2"], match["red3"]]
 			blue = [match["blue1"], match["blue2"], match["blue3"]]
-			database.insert_match(match["match_number"], competition, red, blue)
+			database.insert_match(match["match"], competition, red, blue)
 
 def request_season(addr, year):
 	resp = write_msg_new(addr, REQUEST_SEASON, {"year": year})
