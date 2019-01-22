@@ -70,7 +70,7 @@ def get_scores(competition_name, last_match_num):
 
 def dump_matches(competition_name):
 	conn, db = get_db()
-	db.execute("SELECT * FROM matches WHERE competition=?", (competition,))
+	db.execute("SELECT * FROM matches WHERE competition=?", (competition_name,))
 	return db.fetchall()
 
 def list_competitions(year):
