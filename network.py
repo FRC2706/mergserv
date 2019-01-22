@@ -46,6 +46,7 @@ def add_peer(peer):
 		log.ok("Network","Added peer '" + peer + "'")
 		request_season(peer, datetime.now().year)
 		push_all(peer, datetime.now().year)
+		pull()
 		for comp in database.list_competitions(datetime.now().year):
 			log.debug("SYNC", "Pulling %s matches from '%s'" % (comp, peer))
 			request_matches(peer, comp)
