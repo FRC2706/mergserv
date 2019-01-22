@@ -135,10 +135,11 @@ def insert_competition(code, year):
 def insert_match(number, event, red, blue):
 	try:
 		conn, db = get_db()
-		db.execute("INSERT INTO matches (match_number, competition, red1, red2, red3, blue1, blue2, blue3) VALUES (?,?,?,?,?,?,?,?)", (number, event, red[0], red[1], red[2], blue[0], blue[1], blue[2]))
+		db.execute("INSERT INTO matches (match, competition, red1, red2, red3, blue1, blue2, blue3) VALUES (?,?,?,?,?,?,?,?)", (number, event, red[0], red[1], red[2], blue[0], blue[1], blue[2]))
 		conn.commit()
 		return True
 	except:
+		traceback.print_exc()
 		return False
 
 def insert_team(number, name, key):

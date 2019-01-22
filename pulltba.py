@@ -55,7 +55,7 @@ if not status:
     sys.exit(1)
 
 # Inform the user
-current_season = status['current_season']
+current_season = 2018
 print("Current season is %s" % current_season)
 
 # Make request
@@ -86,7 +86,8 @@ for event in events:
         try:
             red = [int(re.sub('[^0-9]','', x)) for x in match['alliances']['red']['team_keys']]
             blue = [int(re.sub('[^0-9]','', x)) for x in match['alliances']['blue']['team_keys']]
-            database.insert_match(match['match_number'], event['key'], red, blue)
+            if not database.insert_match(match['match_number'], event['key'], red, blue):
+                sys.exit(1)
         except Exception as e:
             print(e)
             print(event['key'])

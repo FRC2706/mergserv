@@ -47,6 +47,7 @@ def add_peer(peer):
 		request_season(peer, datetime.now().year)
 		push_all(peer, datetime.now().year)
 		for comp in database.list_competitions(datetime.now().year):
+			log.debug("SYNC", "Pulling %s matches from '%s'", % (comp, peer))
 			request_matches(peer, comp)
 		print("Finished syncing with '%s" % peer)
 
