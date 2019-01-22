@@ -34,7 +34,7 @@ while True:
 
     elif command.startswith("sync "):
         year = int(command.split(" ")[1])
-        if len(peers) == 0:
+        if len(network.peers) == 0:
             print("No one to sync with!")
         else:
             for peer in network.peers:
