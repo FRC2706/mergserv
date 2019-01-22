@@ -49,7 +49,7 @@ def add_peer(peer):
 		for comp in database.list_competitions(datetime.now().year):
 			log.debug("SYNC", "Pulling %s matches from '%s'" % (comp['competition'], peer))
 			request_matches(peer, comp['competition'])
-		print("Finished syncing with '%s" % peer)
+		log.ok("SYNC", "Finished syncing with '%s'" % peer)
 
 def remove_peer(peer):
 	global peers
@@ -129,7 +129,6 @@ def request_matches(addr, competition):
 	resp = write_msg_new(addr, REQUEST_DUMP_MATCHES, {"competition": competition})
 	if resp != None and resp["type"] == RESPONSE_OK and "matches" in resp:
 		for match in resp["matches"]:
-			print(match)
 			red = [match["red1"], match["red2"], match["red3"]]
 			blue = [match["blue1"], match["blue2"], match["blue3"]]
 			database.insert_match(match["match"], competition, red, blue)
