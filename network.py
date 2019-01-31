@@ -43,20 +43,22 @@ def add_peer(peer):
 	global peers
 	if not peer in peers and not peer in localips:
 		peers.append(peer)
-		log.ok("Network","Added peer '" + peer + "'")
-		request_season(peer, datetime.now().year)
-		push_all(peer, datetime.now().year)
-		for comp in database.list_competitions(datetime.now().year):
-			log.debug("SYNC", "Pulling %s matches from '%s'" % (comp['competition'], peer))
-			request_matches(peer, comp['competition'])
-		print("Finished syncing with '%s" % peer)
+		log.ok("Network","Added peer '" + peer + "'. Syncing now...")
+		sync(peer)
 
-def remove_peer(peer):
+
+def sync(peer):
+	request_season(peer, datetime.now().year)
+	push_all(peer, datetime.now().year)
+	for comp in database.list_competitions(datetime.now().year):
+		request_matches(peer, comp['competition'])
+	log.ok("Network", "Finished syncing with '%s'" % peer)
+
+def remove_peer(peer, reason):
 	global peers
 	if peer in peers:
 		peers.remove(peer)
-		log.ok("Network","Removed peer '" + peer + "'")
-		traceback.print_exc()
+		log.ok("Network","Removed peer '" + peer + "' reason: " + reason)
 
 def read_string(sock):
 	val = ""
@@ -76,7 +78,7 @@ def write_msg_new(addr, request_type, extra):
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sock.connect((addr, PORT))
 	except:
-		remove_peer(addr)
+		remove_peer(addr, "Unable to connect")
 		return None
 	return write_msg(sock, request_type, extra, True)
 
@@ -128,11 +130,7 @@ def pull(addr, competition):
 def request_matches(addr, competition):
 	resp = write_msg_new(addr, REQUEST_DUMP_MATCHES, {"competition": competition})
 	if resp != None and resp["type"] == RESPONSE_OK and "matches" in resp:
-		for match in resp["matches"]:
-			print(match)
-			red = [match["red1"], match["red2"], match["red3"]]
-			blue = [match["blue1"], match["blue2"], match["blue3"]]
-			database.insert_match(match["match"], competition, red, blue)
+		database.insert_many_matches(resp['matches'], competition)
 
 def request_season(addr, year):
 	resp = write_msg_new(addr, REQUEST_SEASON, {"year": year})
@@ -275,8 +273,8 @@ def peerscan():
 	
 	# Discover peers
 	tmp_peers = fed_peers
-	tmp_peers = tmp_peers + peers
-	tmp_peers = tmp_peers + expand_lan()
+	tmp_peers += peers
+	tmp_peers += expand_lan()
 	for peer in man_peers:
 		if not peer in peers:
 			tmp_peers.append(peer)
@@ -310,7 +308,7 @@ def scan_range(peer_range):
 			add_peer(peer)
 			handshake(sock)
 		except:
-			remove_peer(peer)
+			remove_peer(peer, "Unable to connect")
 	write_peers()
 
 def expand_lan():

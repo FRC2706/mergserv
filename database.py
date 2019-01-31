@@ -143,11 +143,11 @@ def insert_competition(code, year):
 	try:
 		conn, db = get_db()
 		db.execute("INSERT INTO competitions (year, competition) VALUES (?, ?)", (year, code))
-		print("Tried inserting match %s" % code)
 		conn.commit()
 		return True
-	except:
-		traceback.print_exc()
+	except Exception as e:
+		if "UNIQUE" not in str(e):
+			traceback.print_exc()
 		return False
 
 def insert_match(number, event, red, blue):
@@ -157,8 +157,22 @@ def insert_match(number, event, red, blue):
 		conn.commit()
 		return True
 	except:
-		traceback.print_exc()
+		if "UNIQUE" not in str(e):
+			traceback.print_exc()
 		return False
+
+def insert_many_matches(matches, event):
+	conn,db = get_db()
+	for match in matches:
+		number = match['match']
+		red = [match["red1"], match["red2"], match["red3"]]
+		blue = [match["blue1"], match["blue2"], match["blue3"]]
+		try:
+			db.execute("INSERT INTO matches (match, competition, red1, red2, red3, blue1, blue2, blue3) VALUES (?,?,?,?,?,?,?,?)", (number, event, red[0], red[1], red[2], blue[0], blue[1], blue[2]))
+		except:
+			if "UNIQUE" not in str(e):
+				traceback.print_exc()
+
 
 def insert_team(number, name, key):
 	try:
