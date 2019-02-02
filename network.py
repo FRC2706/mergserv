@@ -5,7 +5,8 @@ import json
 import database
 import crypto
 import ipaddress
-import ifaddr
+import config
+#import ifaddr
 import time
 from math import ceil
 import log
@@ -312,18 +313,19 @@ def scan_range(peer_range):
 	write_peers()
 
 def expand_lan():
-	addrs = []
-	for adapter in ifaddr.get_adapters():
-		for localhost in adapter.ips:
-			if str(localhost.ip) not in localips:
-				localips.append(str(localhost.ip))
-			if type(localhost.ip) != str or str(localhost.ip) == "127.0.0.1":
-				continue
-			for ip in ipaddress.ip_network(localhost.ip + "/24", False).hosts():
-				if str(ip) == localhost.ip:
-					continue
-				addrs.append(ip)
-	return addrs
+	#addrs = []
+	#for adapter in ifaddr.get_adapters():
+	#	for localhost in adapter.ips:
+	#		if str(localhost.ip) not in localips:
+	#			localips.append(str(localhost.ip))
+	#		if type(localhost.ip) != str or str(localhost.ip) == "127.0.0.1":
+	#			continue
+	#		for ip in ipaddress.ip_network(localhost.ip + "/24", False).hosts():
+	#			if str(ip) == localhost.ip:
+	#				continue
+	#			addrs.append(ip)
+	#return addrs
+	return []
 
 def write_peers():
 	f = open("disc_peers", "w+")
@@ -337,21 +339,21 @@ fed_peers = []
 # Load man_peers
 man_peers = []
 try:
-	f = open("man_peers", "r")
+	f = open(config.MAN_PEERS, "r")
 	for line in f:
 		line = line.strip()
 		if not line == "" and not line.startswith("#"):
 			man_peers.append(line)
 	f.close()
 except:
-	f = open("man_peers", "w+")
+	f = open(config.MAN_PEERS, "w+")
 	f.write("167.99.176.67")	# openfortress.xyz server
 	f.close()
 
 # Load discovered peers
 peers = []
 try:
-	f = open("disc_peers", "r")
+	f = open(config.DISC_PEERS, "r")
 	for line in f:
 		line = line.strip()
 		if not line == "" and not line.startswith("#"):

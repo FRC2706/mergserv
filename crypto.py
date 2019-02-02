@@ -3,6 +3,7 @@ import base64
 import nacl.signing
 import nacl.encoding
 import log
+import config
 
 # Returns signature for row
 def sign_row(row):
@@ -27,7 +28,7 @@ def verify_row(row, public, signature):
 seed = None
 pubkey = None
 try:
-        with open('private.key') as keyf:
+        with open(config.PRIVATE_KEY) as keyf:
                 seed = keyf.read().strip()
         signing_key = nacl.signing.SigningKey(seed=seed, encoder=nacl.encoding.URLSafeBase64Encoder)
         pubkey = signing_key.verify_key.encode(encoder=nacl.encoding.URLSafeBase64Encoder).decode('utf-8')
@@ -36,6 +37,6 @@ except:
         signing_key = nacl.signing.SigningKey.generate()
         pubkey = signing_key.verify_key.encode(encoder=nacl.encoding.URLSafeBase64Encoder).decode('utf-8')
         seed = signing_key.encode(encoder=nacl.encoding.URLSafeBase64Encoder).decode('utf-8')
-        with open('private.key', 'w') as keyf:
+        with open(config.PRIVATE_KEY, 'w') as keyf:
                 keyf.write(seed)
 log.info("CRYPTO", "Loaded key: " + pubkey)

@@ -1,0 +1,5 @@
+PATH = "/storage/emulated/0/Download/"
+PRIVATE_KEY = PATH + "private.key"
+DATABASE = PATH + "merg.db"
+MAN_PEERS = PATH + "man_peers"
+DISC_PEERS = PATH + "disc_peers"

@@ -3,8 +3,7 @@ import crypto
 import log
 import traceback
 import json
-
-DATABASE = "merg.db"
+import config
 
 def init_database():
 	conn, db = get_db()
@@ -136,7 +135,7 @@ def push_events(competition, events):
 	return 0
 
 def get_db():
-	conn = sqlite3.connect(DATABASE)
+	conn = sqlite3.connect(config.DATABASE)
 	return (conn, conn.cursor())
 
 def insert_competition(code, year):
