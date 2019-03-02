@@ -8,5 +8,5 @@ if len(sys.argv) != 3:
 	exit(1)
 
 conn, db = database.get_db()
-db.execute("UPDATE teams SET public_key=? WHERE team=?", (sys.argv[1], sys.argv[2]))
+db.execute("UPDATE teams SET public_key=? WHERE team=?", (sys.argv[2], sys.argv[1]))
 conn.commit()

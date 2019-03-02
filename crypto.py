@@ -6,16 +6,18 @@ import log
 
 # Returns signature for row
 def sign_row(row):
-	jstr = json.dumps(row)
+	jstr = json.dumps(row, separators=(',', ':'))
+	jstr = "".join(jstr.split())
 	signing_key = nacl.signing.SigningKey(seed, nacl.encoding.URLSafeBase64Encoder)
 	signature = signing_key.sign(jstr.encode('utf-8'))
-	return base64.b64encode(signature.signature).decode('utf-8')
+	return base64.urlsafe_b64encode(signature.signature).decode('utf-8')
 
 # Returns true or false
 def verify_row(row, public, signature):
 	obj = row.copy()
-	signature = base64.b64decode(signature.encode('utf-8'))
-	jstr = json.dumps(obj)
+	signature = base64.urlsafe_b64decode(signature.encode('utf-8'))
+	jstr = json.dumps(obj, separators=(',', ':'))
+	jstr = "".join(jstr.split())
 	verify_key = nacl.signing.VerifyKey(public, encoder=nacl.encoding.URLSafeBase64Encoder)
 	try:
 		verify_key.verify(jstr.encode('utf-8'), signature)

@@ -3,7 +3,6 @@
 !*.py
 !*.md
 !mergserv
-!mkprivate
 !trustkey
 !untrustkey
 !setup
